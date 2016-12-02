@@ -51,7 +51,8 @@ public final class LoadBalancer implements RoutingErrorHandler, AutoCloseable
             ConnectionPool connections,
             BoltServerAddress... routingAddresses ) throws ServiceUnavailableException
     {
-        this( settings, clock, log, connections, new ClusterComposition.Provider.Default( clock ), routingAddresses );
+        this( settings, clock, log, connections, new ClusterComposition.Provider.Default( clock, log ),
+                routingAddresses );
     }
 
     LoadBalancer(
@@ -129,6 +130,8 @@ public final class LoadBalancer implements RoutingErrorHandler, AutoCloseable
     {
         if ( stale() )
         {
+            log.info( String.format( "Routing information is stale. Ttl %s currentMs %s, routers %s, writers %s, readers %s", expirationTimeout, clock.millis(), routers.size(), writers.size(),
+                    readers.size() ) );
             try
             {
                 // get a new routing table
@@ -147,6 +150,11 @@ public final class LoadBalancer implements RoutingErrorHandler, AutoCloseable
             catch ( InterruptedException e )
             {
                 throw new ServiceUnavailableException( "Thread was interrupted while establishing connection.", e );
+            }
+            finally
+            {
+                log.info( String.format( "Refreshed routing information. Ttl %s, Routers %s, writers %s, readers %s",
+                        expirationTimeout, routers.size(), writers.size(), readers.size()) );
             }
         }
     }
@@ -174,9 +182,11 @@ public final class LoadBalancer implements RoutingErrorHandler, AutoCloseable
                     throw new ServiceUnavailableException( NO_ROUTERS_AVAILABLE );
                 }
                 ClusterComposition cluster;
+                log.info( "Acquiring connection towards {} to get cluster composition", address );
                 try ( Connection connection = connections.acquire( address ) )
                 {
                     cluster = provider.getClusterComposition( connection );
+                    log.info( "Got cluster composition {}", cluster );
                 }
                 catch ( Exception e )
                 {
