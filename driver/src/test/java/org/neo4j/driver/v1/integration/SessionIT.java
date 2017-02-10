@@ -26,9 +26,11 @@ import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Session;
+import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.util.TestNeo4j;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 public class SessionIT
 {
@@ -82,6 +84,47 @@ public class SessionIT
 
             // Then
             assertFalse( session.isOpen() );
+        }
+    }
+
+    @Test
+    public void shouldAcceptBookmark()
+    {
+        String bookmark = "SampleBookmark";
+
+        try ( Driver driver = GraphDatabase.driver( neo4j.address() ) )
+        {
+            try ( Session session = driver.session() )
+            {
+                try ( Transaction transaction = session.beginTransaction( bookmark ) )
+                {
+                    assertNotNull( transaction );
+                }
+            }
+        }
+    }
+
+    @Test
+    public void transactionShouldHaveBookmarkAfterCommit()
+    {
+        try ( Driver driver = GraphDatabase.driver( neo4j.address() ) )
+        {
+            try ( Session session = driver.session() )
+            {
+                Transaction transaction = session.beginTransaction();
+                try
+                {
+                    transaction.run( "CREATE ()" );
+                    transaction.success();
+                }
+                finally
+                {
+                    transaction.close();
+                }
+
+                System.out.println( transaction.bookmark() );
+                assertNotNull( transaction.bookmark() );
+            }
         }
     }
 }

@@ -82,4 +82,7 @@ public interface Transaction extends Resource, StatementRunner
      */
     @Override
     void close();
+
+
+    String bookmark();
 }

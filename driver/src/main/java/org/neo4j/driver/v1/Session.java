@@ -56,6 +56,8 @@ public interface Session extends Resource, StatementRunner
      */
     Transaction beginTransaction();
 
+    Transaction beginTransaction(String bookmark);
+
 
     /**
      * Signal that you are done using this session. In the default driver usage, closing

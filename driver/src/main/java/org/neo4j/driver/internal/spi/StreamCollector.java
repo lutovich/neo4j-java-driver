@@ -102,6 +102,9 @@ public interface StreamCollector
         public void notifications( List<Notification> notifications ) {}
 
         @Override
+        public void bookmark( String bookmark ) {}
+
+        @Override
         public void done() {}
 
         @Override
@@ -123,6 +126,23 @@ public interface StreamCollector
         }
     }
 
+    class BookmarkCollector extends NoOperationStreamCollector
+    {
+        private String bookmark = null;
+
+        @Override
+        public void bookmark( String bookmark )
+        {
+            this.bookmark = bookmark;
+
+        }
+
+        public String getBookmark()
+        {
+            return bookmark;
+        }
+    }
+
     // TODO: This should be modified to simply have head/record/tail methods
 
     void keys( String[] names );
@@ -138,6 +158,8 @@ public interface StreamCollector
     void profile( ProfiledPlan plan );
 
     void notifications( List<Notification> notifications );
+
+    void bookmark( String bookmark );
 
     void done();
 

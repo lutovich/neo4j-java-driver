@@ -22,8 +22,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.neo4j.driver.internal.spi.Connection;
-import org.neo4j.driver.v1.Logger;
 import org.neo4j.driver.internal.types.InternalTypeSystem;
+import org.neo4j.driver.v1.Logger;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Statement;
@@ -145,8 +145,14 @@ public class InternalSession implements Session
     @Override
     public Transaction beginTransaction()
     {
+        return beginTransaction( null );
+    }
+
+    @Override
+    public Transaction beginTransaction(String bookmark)
+    {
         ensureConnectionIsValidBeforeOpeningTransaction();
-        currentTransaction = new InternalTransaction( connection, txCleanup );
+        currentTransaction = new InternalTransaction( connection, bookmark, txCleanup );
         connection.onError( new Runnable() {
             @Override
             public void run()

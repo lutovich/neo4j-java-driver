@@ -19,11 +19,13 @@
 package org.neo4j.driver.internal;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.internal.spi.StreamCollector;
 import org.neo4j.driver.internal.types.InternalTypeSystem;
+import org.neo4j.driver.internal.value.StringValue;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Statement;
 import org.neo4j.driver.v1.StatementResult;
@@ -67,14 +69,26 @@ public class InternalTransaction implements Transaction
     private final Connection conn;
 
     private State state = State.ACTIVE;
+    private String bookmark = null;
 
     public InternalTransaction( Connection conn, Runnable cleanup )
+    {
+        this( conn, null, cleanup );
+    }
+
+    public InternalTransaction( Connection conn, String bookmark, Runnable cleanup )
     {
         this.conn = conn;
         this.cleanup = cleanup;
 
+        Map<String, Value> parameters = new HashMap<>();
+        if( bookmark != null )
+        {
+            parameters.put( "bookmark", new StringValue( bookmark ) );
+        }
+
         // Note there is no sync here, so this will just value queued locally
-        conn.run( "BEGIN", Collections.<String, Value>emptyMap(), StreamCollector.NO_OP );
+        conn.run( "BEGIN", parameters, StreamCollector.NO_OP );
         conn.discardAll();
     }
 
@@ -105,9 +119,13 @@ public class InternalTransaction implements Transaction
             {
                 if ( state == State.MARKED_SUCCESS )
                 {
-                    conn.run( "COMMIT", Collections.<String, Value>emptyMap(), StreamCollector.NO_OP );
-                    conn.discardAll();
+                    StreamCollector.BookmarkCollector bookmarkCollector = new StreamCollector.BookmarkCollector();
+
+                    conn.run( "COMMIT", Collections.<String, Value>emptyMap(), bookmarkCollector);
+                    conn.pullAll(bookmarkCollector);
                     conn.sync();
+
+                    bookmark = bookmarkCollector.getBookmark();
                     state = State.SUCCEEDED;
                 }
                 else if ( state == State.MARKED_FAILED || state == State.ACTIVE )
@@ -203,5 +221,17 @@ public class InternalTransaction implements Transaction
     public void markToClose()
     {
         state = State.FAILED;
+    }
+
+    public String bookmark()
+    {
+        if ( state == State.SUCCEEDED )
+        {
+            return bookmark;
+        }
+        else
+        {
+            return null;
+        }
     }
 }

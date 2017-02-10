@@ -90,6 +90,7 @@ public class SocketResponseHandler implements MessageHandler
         collectPlan( collector, meta.get( "plan" ) );
         collectProfile( collector, meta.get( "profile" ) );
         collectNotifications( collector, meta.get( "notifications" ) );
+        collectBookmark( collector, meta.get( "bookmark" ) );
         collector.doneSuccess();
     }
 
@@ -102,6 +103,15 @@ public class SocketResponseHandler implements MessageHandler
             collector.notifications( notifications.asList( notification ) );
         }
     }
+
+    private void collectBookmark( StreamCollector collector, Value bookmark )
+    {
+        if ( bookmark != null )
+        {
+            collector.bookmark( bookmark.asString() );
+        }
+    }
+
 
     private void collectPlan( StreamCollector collector, Value plan )
     {
