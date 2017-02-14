@@ -23,22 +23,31 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.neo4j.driver.v1.AuthToken;
 import org.neo4j.driver.v1.AuthTokens;
+import org.neo4j.driver.v1.Config;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.GraphDatabase;
+import org.neo4j.driver.v1.RetryLogicSupport;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.exceptions.ClientException;
 import org.neo4j.driver.v1.exceptions.Neo4jException;
+import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
+import org.neo4j.driver.v1.exceptions.SessionExpiredException;
+import org.neo4j.driver.v1.util.Function;
 import org.neo4j.driver.v1.util.TestNeo4j;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -394,5 +403,44 @@ public class SessionIT
 
         // Then
         assertFalse( session.isOpen() );
+    }
+
+    @Test
+    public void shouldRetry()
+    {
+        Config config = Config.build()
+                .withRetryLogic( RetryLogicSupport.simpleRetryLogic( 5, 100, MILLISECONDS ) )
+                .toConfig();
+
+        try ( Driver driver = GraphDatabase.driver( neo4j.uri(), config );
+              Session session = driver.session() )
+        {
+            final AtomicInteger counter = new AtomicInteger();
+
+            int answer = session.execute( new Function<Transaction,Integer>()
+            {
+                @Override
+                public Integer apply( Transaction transaction )
+                {
+                    System.out.println("work...");
+                    int value = counter.getAndIncrement();
+                    if ( value >= 4 )
+                    {
+                        return 42;
+                    }
+                    else if ( value % 2 == 0 )
+                    {
+                        throw new ServiceUnavailableException( "" );
+                    }
+                    else
+                    {
+                        throw new SessionExpiredException( "" );
+                    }
+                }
+            } );
+
+            assertEquals( 5, counter.get() );
+            assertEquals( 42, answer );
+        }
     }
 }

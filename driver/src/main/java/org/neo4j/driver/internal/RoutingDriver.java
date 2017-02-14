@@ -27,6 +27,8 @@ import org.neo4j.driver.internal.spi.ConnectionPool;
 import org.neo4j.driver.internal.util.Clock;
 import org.neo4j.driver.v1.AccessMode;
 import org.neo4j.driver.v1.Logging;
+import org.neo4j.driver.v1.RetryDecision;
+import org.neo4j.driver.v1.RetryLogic;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.exceptions.ClientException;
 
@@ -52,10 +54,11 @@ public class RoutingDriver extends BaseDriver
             ConnectionPool connections,
             SecurityPlan securityPlan,
             SessionFactory sessionFactory,
+            RetryLogic<RetryDecision> retryLogic,
             Clock clock,
             Logging logging )
     {
-        super( verifiedSecurityPlan( securityPlan ), sessionFactory, logging );
+        super( verifiedSecurityPlan( securityPlan ), sessionFactory, retryLogic, logging );
         this.loadBalancer = new LoadBalancer( settings, clock, log, connections, seedAddress );
     }
 
@@ -63,7 +66,7 @@ public class RoutingDriver extends BaseDriver
     protected Session newSessionWithMode( AccessMode mode )
     {
         Connection connection = acquireConnection( mode );
-        Session networkSession = sessionFactory.newInstance( connection );
+        Session networkSession = sessionFactory.newInstance( connection, retryLogic );
         return new RoutingNetworkSession( networkSession, mode, connection.boltServerAddress(), loadBalancer );
     }
 

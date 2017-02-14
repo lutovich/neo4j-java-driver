@@ -27,6 +27,8 @@ import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.internal.types.InternalTypeSystem;
 import org.neo4j.driver.v1.Logger;
 import org.neo4j.driver.v1.Record;
+import org.neo4j.driver.v1.RetryDecision;
+import org.neo4j.driver.v1.RetryLogic;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Statement;
 import org.neo4j.driver.v1.StatementResult;
@@ -34,8 +36,10 @@ import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.Values;
 import org.neo4j.driver.v1.exceptions.ClientException;
+import org.neo4j.driver.v1.exceptions.RetryingFailedException;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 import org.neo4j.driver.v1.types.TypeSystem;
+import org.neo4j.driver.v1.util.Function;
 
 import static org.neo4j.driver.v1.Values.value;
 
@@ -67,9 +71,12 @@ public class NetworkSession implements Session
     private ExplicitTransaction currentTransaction;
     private AtomicBoolean isOpen = new AtomicBoolean( true );
 
-    NetworkSession( Connection connection )
+    private final RetryLogic<RetryDecision> retryLogic;
+
+    NetworkSession( Connection connection, RetryLogic<RetryDecision> retryLogic )
     {
         this.connection = connection;
+        this.retryLogic = retryLogic;
 
         if( connection != null && connection.logger() != null )
         {
@@ -226,6 +233,73 @@ public class NetworkSession implements Session
             }
         } );
         return currentTransaction;
+    }
+
+    @Override
+    public <T> T execute( Function<Transaction,T> work )
+    {
+        return execute( work, null );
+    }
+
+    private <T> T execute( Function<Transaction,T> work, RetryDecision previousRetryDecision )
+    {
+        try
+        {
+            return executeInTx( work );
+        }
+        catch ( Throwable error )
+        {
+            RetryDecision newRetryDecision = retryLogic.apply( error, previousRetryDecision );
+            switch ( newRetryDecision.action() )
+            {
+            case THROW:
+                throw new RetryingFailedException( error );
+            case RETURN_NULL:
+                return null;
+            case RETRY:
+                return execute( work, newRetryDecision );
+            default:
+                throw new IllegalArgumentException();
+            }
+        }
+    }
+
+    private <T> T executeInTx( Function<Transaction,T> work ) throws Throwable
+    {
+        Transaction tx = beginTransaction();
+        T result = null;
+        Throwable error = null;
+        try
+        {
+            result = work.apply( tx );
+        }
+        catch ( Throwable workError )
+        {
+            error = workError;
+        }
+        finally
+        {
+            try
+            {
+                tx.close();
+            }
+            catch ( Throwable closeError )
+            {
+                if ( error != null )
+                {
+                    error.addSuppressed( closeError );
+                }
+                else
+                {
+                    error = closeError;
+                }
+            }
+        }
+        if ( error != null )
+        {
+            throw error;
+        }
+        return result;
     }
 
     @Override

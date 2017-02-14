@@ -40,6 +40,7 @@ import org.neo4j.driver.v1.Config;
 import org.neo4j.driver.v1.EventLogger;
 import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Logging;
+import org.neo4j.driver.v1.RetryLogicSupport;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.exceptions.ClientException;
 import org.neo4j.driver.v1.exceptions.ProtocolException;
@@ -338,7 +339,8 @@ public class RoutingDriverTest
     private RoutingDriver driverWithPool( ConnectionPool pool )
     {
         RoutingSettings settings = new RoutingSettings( 10, 5_000 );
-        return new RoutingDriver( settings, SEED, pool, insecure(), new NetworkSessionFactory(), clock, logging );
+        return new RoutingDriver( settings, SEED, pool, insecure(), new NetworkSessionFactory(),
+                RetryLogicSupport.defaultRetryLogic(), clock, logging );
     }
 
     @SafeVarargs

@@ -18,6 +18,7 @@
  */
 package org.neo4j.driver.v1;
 
+import org.neo4j.driver.v1.util.Function;
 import org.neo4j.driver.v1.util.Resource;
 
 /**
@@ -77,6 +78,8 @@ public interface Session extends Resource, StatementRunner
      * @return a new {@link Transaction}
      */
     Transaction beginTransaction( String bookmark );
+
+    <T> T execute( Function<Transaction,T> work );
 
     /**
      * Return the bookmark received following the last completed

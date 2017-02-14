@@ -21,6 +21,8 @@ package org.neo4j.driver.internal;
 import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.v1.Logger;
 import org.neo4j.driver.v1.Logging;
+import org.neo4j.driver.v1.RetryDecision;
+import org.neo4j.driver.v1.RetryLogic;
 import org.neo4j.driver.v1.Session;
 
 class LeakLoggingNetworkSessionFactory implements SessionFactory
@@ -35,8 +37,8 @@ class LeakLoggingNetworkSessionFactory implements SessionFactory
     }
 
     @Override
-    public Session newInstance( Connection connection )
+    public Session newInstance( Connection connection, RetryLogic<RetryDecision> retryLogic )
     {
-        return new LeakLoggingNetworkSession( connection, logger );
+        return new LeakLoggingNetworkSession( connection, retryLogic, logger );
     }
 }

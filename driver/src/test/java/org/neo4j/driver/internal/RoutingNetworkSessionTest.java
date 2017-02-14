@@ -43,6 +43,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.neo4j.driver.v1.RetryLogicSupport.defaultRetryLogic;
 
 public class RoutingNetworkSessionTest
 {
@@ -68,7 +69,7 @@ public class RoutingNetworkSessionTest
                 when( connection ).run( anyString(), any( Map.class ), any( Collector.class ) );
 
         RoutingNetworkSession result =
-                new RoutingNetworkSession( new NetworkSession( connection ), AccessMode.WRITE, connection.boltServerAddress(),
+                new RoutingNetworkSession( new NetworkSession( connection, defaultRetryLogic() ), AccessMode.WRITE, connection.boltServerAddress(),
                         onError );
 
         // When
@@ -95,7 +96,7 @@ public class RoutingNetworkSessionTest
         doThrow( new ClientException( "Neo.ClientError.Cluster.NotALeader", "oh no!" ) ).
                 when( connection ).run( anyString(), any( Map.class ), any( Collector.class ) );
         RoutingNetworkSession session =
-                new RoutingNetworkSession( new NetworkSession(connection), AccessMode.WRITE, connection.boltServerAddress(),
+                new RoutingNetworkSession( new NetworkSession(connection, defaultRetryLogic() ), AccessMode.WRITE, connection.boltServerAddress(),
                         onError );
 
         // When
@@ -122,7 +123,7 @@ public class RoutingNetworkSessionTest
         doThrow( new ClientException( "Neo.ClientError.Cluster.NotALeader", "oh no!" ) ).
                 when( connection ).run( anyString(), any( Map.class ), any( Collector.class ) );
         RoutingNetworkSession session =
-                new RoutingNetworkSession( new NetworkSession( connection ), AccessMode.READ, connection.boltServerAddress(), onError );
+                new RoutingNetworkSession( new NetworkSession( connection, defaultRetryLogic() ), AccessMode.READ, connection.boltServerAddress(), onError );
 
         // When
         try
@@ -146,7 +147,7 @@ public class RoutingNetworkSessionTest
         doThrow( toBeThrown ).
                 when( connection ).run( anyString(), any( Map.class ), any( Collector.class ) );
         RoutingNetworkSession session =
-                new RoutingNetworkSession( new NetworkSession( connection ), AccessMode.WRITE, connection.boltServerAddress(), onError );
+                new RoutingNetworkSession( new NetworkSession( connection, defaultRetryLogic() ), AccessMode.WRITE, connection.boltServerAddress(), onError );
 
         // When
         try
@@ -171,7 +172,7 @@ public class RoutingNetworkSessionTest
                 when( connection ).sync();
 
         RoutingNetworkSession session =
-                new RoutingNetworkSession( new NetworkSession( connection ),  AccessMode.WRITE, connection.boltServerAddress(),
+                new RoutingNetworkSession( new NetworkSession( connection, defaultRetryLogic() ),  AccessMode.WRITE, connection.boltServerAddress(),
                         onError );
 
         // When
@@ -197,7 +198,7 @@ public class RoutingNetworkSessionTest
         doThrow( new ClientException( "Neo.ClientError.Cluster.NotALeader", "oh no!" ) ).when( connection ).sync();
 
         RoutingNetworkSession session =
-                new RoutingNetworkSession( new NetworkSession( connection ), AccessMode.WRITE, connection.boltServerAddress(), onError );
+                new RoutingNetworkSession( new NetworkSession( connection, defaultRetryLogic() ), AccessMode.WRITE, connection.boltServerAddress(), onError );
 
         // When
         try

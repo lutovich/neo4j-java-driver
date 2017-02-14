@@ -25,6 +25,8 @@ import org.neo4j.driver.v1.AccessMode;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.Logger;
 import org.neo4j.driver.v1.Logging;
+import org.neo4j.driver.v1.RetryDecision;
+import org.neo4j.driver.v1.RetryLogic;
 import org.neo4j.driver.v1.Session;
 
 abstract class BaseDriver implements Driver
@@ -33,14 +35,16 @@ abstract class BaseDriver implements Driver
 
     private final SecurityPlan securityPlan;
     protected final SessionFactory sessionFactory;
+    protected final RetryLogic<RetryDecision> retryLogic;
     protected final Logger log;
 
     private AtomicBoolean closed = new AtomicBoolean( false );
 
-    BaseDriver( SecurityPlan securityPlan, SessionFactory sessionFactory, Logging logging )
+    BaseDriver( SecurityPlan securityPlan, SessionFactory sessionFactory, RetryLogic<RetryDecision> retryLogic, Logging logging )
     {
         this.securityPlan = securityPlan;
         this.sessionFactory = sessionFactory;
+        this.retryLogic = retryLogic;
         this.log = logging.getLog( DRIVER_LOG_NAME );
     }
 

@@ -20,6 +20,8 @@ package org.neo4j.driver.internal;
 
 import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.v1.Logger;
+import org.neo4j.driver.v1.RetryDecision;
+import org.neo4j.driver.v1.RetryLogic;
 
 import static java.lang.System.lineSeparator;
 
@@ -28,9 +30,9 @@ class LeakLoggingNetworkSession extends NetworkSession
     private final Logger log;
     private final String stackTrace;
 
-    LeakLoggingNetworkSession( Connection connection, Logger log )
+    LeakLoggingNetworkSession( Connection connection, RetryLogic<RetryDecision> retryLogic, Logger log )
     {
-        super( connection );
+        super( connection, retryLogic );
         this.log = log;
         this.stackTrace = captureStackTrace();
     }

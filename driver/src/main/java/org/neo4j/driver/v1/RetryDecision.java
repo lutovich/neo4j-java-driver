@@ -16,14 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.neo4j.driver.internal;
+package org.neo4j.driver.v1;
 
-import org.neo4j.driver.internal.spi.Connection;
-import org.neo4j.driver.v1.RetryDecision;
-import org.neo4j.driver.v1.RetryLogic;
-import org.neo4j.driver.v1.Session;
-
-interface SessionFactory
+public interface RetryDecision
 {
-    Session newInstance( Connection connection, RetryLogic<RetryDecision> retryLogic );
+    Action action();
+
+    enum Action
+    {
+        RETRY,
+        THROW,
+        RETURN_NULL
+    }
 }

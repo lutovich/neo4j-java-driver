@@ -37,6 +37,8 @@ import org.neo4j.driver.v1.Config;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.Logger;
 import org.neo4j.driver.v1.Logging;
+import org.neo4j.driver.v1.RetryDecision;
+import org.neo4j.driver.v1.RetryLogic;
 import org.neo4j.driver.v1.exceptions.ClientException;
 
 import static java.lang.String.format;
@@ -80,10 +82,10 @@ public class DriverFactory
         switch ( scheme.toLowerCase() )
         {
         case "bolt":
-            return createDirectDriver( address, connectionPool, config, securityPlan, sessionFactory );
+            return createDirectDriver( address, connectionPool, config, securityPlan, sessionFactory, config.retryLogic() );
         case "bolt+routing":
             return createRoutingDriver( address, connectionPool, config, routingSettings, securityPlan,
-                    sessionFactory );
+                    sessionFactory, config.retryLogic() );
         default:
             throw new ClientException( format( "Unsupported URI scheme: %s", scheme ) );
         }
@@ -95,9 +97,10 @@ public class DriverFactory
      * <b>This method is protected only for testing</b>
      */
     protected DirectDriver createDirectDriver( BoltServerAddress address, ConnectionPool connectionPool,
-            Config config, SecurityPlan securityPlan, SessionFactory sessionFactory )
+            Config config, SecurityPlan securityPlan, SessionFactory sessionFactory,
+            RetryLogic<RetryDecision> retryLogic )
     {
-        return new DirectDriver( address, connectionPool, securityPlan, sessionFactory, config.logging() );
+        return new DirectDriver( address, connectionPool, securityPlan, sessionFactory, retryLogic, config.logging() );
     }
 
     /**
@@ -106,9 +109,10 @@ public class DriverFactory
      * <b>This method is protected only for testing</b>
      */
     protected RoutingDriver createRoutingDriver( BoltServerAddress address, ConnectionPool connectionPool,
-            Config config, RoutingSettings routingSettings, SecurityPlan securityPlan, SessionFactory sessionFactory )
+            Config config, RoutingSettings routingSettings, SecurityPlan securityPlan, SessionFactory sessionFactory,
+            RetryLogic<RetryDecision> retryLogic )
     {
-        return new RoutingDriver( routingSettings, address, connectionPool, securityPlan, sessionFactory,
+        return new RoutingDriver( routingSettings, address, connectionPool, securityPlan, sessionFactory, retryLogic,
                 createClock(), config.logging() );
     }
 

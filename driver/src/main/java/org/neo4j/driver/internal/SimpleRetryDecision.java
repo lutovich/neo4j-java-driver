@@ -18,12 +18,29 @@
  */
 package org.neo4j.driver.internal;
 
-import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.v1.RetryDecision;
-import org.neo4j.driver.v1.RetryLogic;
-import org.neo4j.driver.v1.Session;
 
-interface SessionFactory
+public class SimpleRetryDecision implements RetryDecision
 {
-    Session newInstance( Connection connection, RetryLogic<RetryDecision> retryLogic );
+    public static final SimpleRetryDecision THROW = new SimpleRetryDecision( Action.THROW, 0 );
+
+    private final Action action;
+    private final int attempt;
+
+    public SimpleRetryDecision( Action action, int attempt )
+    {
+        this.action = action;
+        this.attempt = attempt;
+    }
+
+    @Override
+    public Action action()
+    {
+        return action;
+    }
+
+    public int attempt()
+    {
+        return attempt;
+    }
 }

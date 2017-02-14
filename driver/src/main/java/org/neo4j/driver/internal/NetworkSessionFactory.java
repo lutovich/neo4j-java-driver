@@ -19,13 +19,15 @@
 package org.neo4j.driver.internal;
 
 import org.neo4j.driver.internal.spi.Connection;
+import org.neo4j.driver.v1.RetryDecision;
+import org.neo4j.driver.v1.RetryLogic;
 import org.neo4j.driver.v1.Session;
 
 class NetworkSessionFactory implements SessionFactory
 {
     @Override
-    public Session newInstance( Connection connection )
+    public Session newInstance( Connection connection, RetryLogic<RetryDecision> retryLogic )
     {
-        return new NetworkSession( connection );
+        return new NetworkSession( connection, retryLogic );
     }
 }

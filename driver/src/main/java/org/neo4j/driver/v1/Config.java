@@ -19,6 +19,7 @@
 package org.neo4j.driver.v1;
 
 import java.io.File;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -65,6 +66,8 @@ public class Config
     /** Strategy for how to trust encryption certificate */
     private final TrustStrategy trustStrategy;
 
+    private final RetryLogic<RetryDecision> retryLogic;
+
     private final int routingFailureLimit;
     private final long routingRetryDelayMillis;
     private final int connectionTimeoutMillis;
@@ -82,6 +85,8 @@ public class Config
         this.routingFailureLimit = builder.routingFailureLimit;
         this.routingRetryDelayMillis = builder.routingRetryDelayMillis;
         this.connectionTimeoutMillis = builder.connectionTimeoutMillis;
+
+        this.retryLogic = builder.retryLogic;
     }
 
     /**
@@ -157,6 +162,11 @@ public class Config
         return trustStrategy;
     }
 
+    public RetryLogic<RetryDecision> retryLogic()
+    {
+        return retryLogic;
+    }
+
     /**
      * Return a {@link ConfigBuilder} instance
      * @return a {@link ConfigBuilder} instance
@@ -193,6 +203,7 @@ public class Config
         private int routingFailureLimit = 1;
         private long routingRetryDelayMillis = TimeUnit.SECONDS.toMillis( 5 );
         private int connectionTimeoutMillis = (int) TimeUnit.SECONDS.toMillis( 5 );
+        private RetryLogic<RetryDecision> retryLogic = RetryLogicSupport.defaultRetryLogic();
 
         private ConfigBuilder() {}
 
@@ -432,6 +443,14 @@ public class Config
                         connectionTimeoutMillis ) );
             }
             this.connectionTimeoutMillis = connectionTimeoutMillisInt;
+            return this;
+        }
+
+        @SuppressWarnings( "unchecked" )
+        public ConfigBuilder withRetryLogic( RetryLogic<? extends RetryDecision> retryLogic )
+        {
+            // todo: this cast sucks... how to avoid it?
+            this.retryLogic = (RetryLogic) Objects.requireNonNull( retryLogic );
             return this;
         }
 

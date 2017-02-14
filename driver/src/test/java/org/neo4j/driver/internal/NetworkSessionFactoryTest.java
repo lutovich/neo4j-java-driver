@@ -21,6 +21,7 @@ package org.neo4j.driver.internal;
 import org.junit.Test;
 
 import org.neo4j.driver.internal.spi.Connection;
+import org.neo4j.driver.v1.RetryLogic;
 import org.neo4j.driver.v1.Session;
 
 import static org.hamcrest.Matchers.instanceOf;
@@ -30,11 +31,12 @@ import static org.mockito.Mockito.mock;
 public class NetworkSessionFactoryTest
 {
     @Test
+    @SuppressWarnings( "unchecked" )
     public void createsNetworkSessions()
     {
         SessionFactory factory = new NetworkSessionFactory();
 
-        Session session = factory.newInstance( mock( Connection.class ) );
+        Session session = factory.newInstance( mock( Connection.class ), mock( RetryLogic.class ) );
 
         assertThat( session, instanceOf( NetworkSession.class ) );
     }

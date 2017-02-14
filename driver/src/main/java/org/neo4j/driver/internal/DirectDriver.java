@@ -23,6 +23,8 @@ import org.neo4j.driver.internal.security.SecurityPlan;
 import org.neo4j.driver.internal.spi.ConnectionPool;
 import org.neo4j.driver.v1.AccessMode;
 import org.neo4j.driver.v1.Logging;
+import org.neo4j.driver.v1.RetryDecision;
+import org.neo4j.driver.v1.RetryLogic;
 import org.neo4j.driver.v1.Session;
 
 import static java.lang.String.format;
@@ -37,9 +39,10 @@ public class DirectDriver extends BaseDriver
             ConnectionPool connections,
             SecurityPlan securityPlan,
             SessionFactory sessionFactory,
+            RetryLogic<RetryDecision> retryLogic,
             Logging logging )
     {
-        super( securityPlan, sessionFactory, logging );
+        super( securityPlan, sessionFactory, retryLogic, logging );
         this.address = address;
         this.connections = connections;
     }
@@ -47,7 +50,7 @@ public class DirectDriver extends BaseDriver
     @Override
     protected Session newSessionWithMode( AccessMode mode )
     {
-        return sessionFactory.newInstance( connections.acquire( address ) );
+        return sessionFactory.newInstance( connections.acquire( address ), retryLogic );
     }
 
     @Override

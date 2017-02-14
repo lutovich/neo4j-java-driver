@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.v1.Logging;
+import org.neo4j.driver.v1.RetryLogic;
 import org.neo4j.driver.v1.Session;
 
 import static org.hamcrest.Matchers.instanceOf;
@@ -31,11 +32,12 @@ import static org.mockito.Mockito.mock;
 public class LeakLoggingNetworkSessionFactoryTest
 {
     @Test
+    @SuppressWarnings( "unchecked" )
     public void createsLeakLoggingNetworkSessions()
     {
         SessionFactory factory = new LeakLoggingNetworkSessionFactory( mock( Logging.class ) );
 
-        Session session = factory.newInstance( mock( Connection.class ) );
+        Session session = factory.newInstance( mock( Connection.class ), mock( RetryLogic.class ) );
 
         assertThat( session, instanceOf( LeakLoggingNetworkSession.class ) );
     }

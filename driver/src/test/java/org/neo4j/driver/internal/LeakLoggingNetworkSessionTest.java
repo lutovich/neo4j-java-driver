@@ -27,6 +27,7 @@ import java.lang.reflect.Method;
 
 import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.v1.Logger;
+import org.neo4j.driver.v1.RetryLogicSupport;
 import org.neo4j.driver.v1.Session;
 
 import static org.hamcrest.Matchers.containsString;
@@ -48,7 +49,7 @@ public class LeakLoggingNetworkSessionTest
     public void logsNothingDuringFinalizationIfClosed() throws Exception
     {
         Logger logger = mock( Logger.class );
-        Session session = new LeakLoggingNetworkSession( connectionMock( false ), logger );
+        Session session = newSession( connectionMock( false ), logger );
 
         finalize( session );
 
@@ -59,7 +60,7 @@ public class LeakLoggingNetworkSessionTest
     public void logsMessageWithStacktraceDuringFinalizationIfLeaked() throws Exception
     {
         Logger logger = mock( Logger.class );
-        Session session = new LeakLoggingNetworkSession( connectionMock( true ), logger );
+        Session session = newSession( connectionMock( true ), logger );
 
         finalize( session );
 
@@ -74,6 +75,11 @@ public class LeakLoggingNetworkSessionTest
         assertThat( loggedMessage, containsString(
                 getClass().getSimpleName() + "." + testName.getMethodName() )
         );
+    }
+
+    private static LeakLoggingNetworkSession newSession( Connection connection, Logger logger )
+    {
+        return new LeakLoggingNetworkSession( connection, RetryLogicSupport.defaultRetryLogic(), logger );
     }
 
     private static void finalize( Session session ) throws Exception

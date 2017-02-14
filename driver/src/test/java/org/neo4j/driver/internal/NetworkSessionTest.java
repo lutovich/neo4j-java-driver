@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import org.neo4j.driver.internal.spi.Connection;
+import org.neo4j.driver.v1.RetryLogicSupport;
 import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.exceptions.ClientException;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
@@ -41,14 +42,14 @@ public class NetworkSessionTest
     public ExpectedException exception = ExpectedException.none();
 
     private final Connection mock = mock( Connection.class );
-    private NetworkSession sess = new NetworkSession( mock );
+    private NetworkSession sess = new NetworkSession( mock, RetryLogicSupport.defaultRetryLogic() );
 
     @Test
     public void shouldSendAllOnRun() throws Throwable
     {
         // Given
         when( mock.isOpen() ).thenReturn( true );
-        NetworkSession sess = new NetworkSession( mock );
+        NetworkSession sess = new NetworkSession( mock, RetryLogicSupport.defaultRetryLogic() );
 
         // When
         sess.run( "whatever" );
@@ -143,7 +144,7 @@ public class NetworkSessionTest
     public void shouldGetExceptionIfTryingToCloseSessionMoreThanOnce() throws Throwable
     {
         // Given
-        NetworkSession sess = new NetworkSession( mock(Connection.class) );
+        NetworkSession sess = new NetworkSession( mock(Connection.class), RetryLogicSupport.defaultRetryLogic() );
         try
         {
             sess.close();

@@ -107,6 +107,12 @@ public class TestNeo4jSession extends TestNeo4j implements Session
     }
 
     @Override
+    public <T> T execute( Function<Transaction,T> work )
+    {
+        return realSession.execute( work );
+    }
+
+    @Override
     public String lastBookmark()
     {
         return realSession.lastBookmark();

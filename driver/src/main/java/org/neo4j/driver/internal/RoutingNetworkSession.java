@@ -35,6 +35,7 @@ import org.neo4j.driver.v1.exceptions.Neo4jException;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 import org.neo4j.driver.v1.exceptions.SessionExpiredException;
 import org.neo4j.driver.v1.types.TypeSystem;
+import org.neo4j.driver.v1.util.Function;
 
 import static java.lang.String.format;
 import static org.neo4j.driver.v1.Values.value;
@@ -117,6 +118,12 @@ public class RoutingNetworkSession implements Session
     public Transaction beginTransaction( String bookmark )
     {
         return new RoutingTransaction( delegate.beginTransaction(bookmark), mode, address, onError);
+    }
+
+    @Override
+    public <T> T execute( Function<Transaction,T> work )
+    {
+        return delegate.execute( work );
     }
 
     @Override

@@ -16,14 +16,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.neo4j.driver.internal;
+package org.neo4j.driver.v1;
 
-import org.neo4j.driver.internal.spi.Connection;
-import org.neo4j.driver.v1.RetryDecision;
-import org.neo4j.driver.v1.RetryLogic;
-import org.neo4j.driver.v1.Session;
+import java.util.concurrent.TimeUnit;
 
-interface SessionFactory
+import org.neo4j.driver.internal.SimpleRetryLogic;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
+
+public final class RetryLogicSupport
 {
-    Session newInstance( Connection connection, RetryLogic<RetryDecision> retryLogic );
+    private RetryLogicSupport()
+    {
+    }
+
+    @SuppressWarnings( "unchecked" )
+    public static RetryLogic<RetryDecision> defaultRetryLogic()
+    {
+        return simpleRetryLogic( 5, 1, SECONDS );
+    }
+
+    @SuppressWarnings( "unchecked" )
+    public static RetryLogic<RetryDecision> simpleRetryLogic( int times, long delay, TimeUnit delayUnit )
+    {
+        // todo: cast sucks!
+        return (RetryLogic) new SimpleRetryLogic( times, delayUnit.toMillis( delay ) );
+    }
 }
