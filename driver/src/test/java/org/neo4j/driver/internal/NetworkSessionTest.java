@@ -27,7 +27,10 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.verification.VerificationMode;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.neo4j.driver.internal.retry.RetryDecision;
 import org.neo4j.driver.internal.retry.RetryLogic;
@@ -37,12 +40,13 @@ import org.neo4j.driver.internal.spi.PooledConnection;
 import org.neo4j.driver.internal.util.FixedRetryLogic;
 import org.neo4j.driver.v1.AccessMode;
 import org.neo4j.driver.v1.Session;
+import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Transaction;
+import org.neo4j.driver.v1.TransactionWork;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.exceptions.ClientException;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 import org.neo4j.driver.v1.exceptions.SessionExpiredException;
-import org.neo4j.driver.v1.util.Function;
 
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -757,6 +761,121 @@ public class NetworkSessionTest
         testRetryErrorsAreNotCombinedWhenSameErrorIsThrown( WRITE );
     }
 
+    @Test
+    public void things()
+    {
+        ConnectionProvider connectionProvider = mock( ConnectionProvider.class );
+        PooledConnection connection = openConnectionMock();
+        when( connectionProvider.acquireConnection( READ ) ).thenReturn( connection );
+        NetworkSession session = newSession( connectionProvider, READ );
+
+        try
+        {
+            session.readTransaction( new TransactionWork<Integer,IOException>()
+            {
+                @Override
+                public Integer execute( Transaction tx ) throws IOException
+                {
+                    int i = ThreadLocalRandom.current().nextInt( 5 );
+                    if ( i > 5 )
+                    {
+                        throw new IOException();
+                    }
+                    return i;
+                }
+            } );
+        }
+        catch ( IOException e )
+        {
+            e.printStackTrace();
+        }
+
+        TransactionWork<Integer,SQLException> work1 = new TransactionWork<Integer,SQLException>()
+        {
+            @Override
+            public Integer execute( Transaction tx ) throws SQLException
+            {
+                int i = ThreadLocalRandom.current().nextInt( 5 );
+                if ( i > 5 )
+                {
+                    throw new SQLException();
+                }
+                return i;
+            }
+        };
+        try
+        {
+            session.readTransaction( work1 );
+        }
+        catch ( SQLException e )
+        {
+            e.printStackTrace();
+        }
+
+        TransactionWork<Integer,RuntimeException> work2 = new TransactionWork<Integer,RuntimeException>()
+        {
+            @Override
+            public Integer execute( Transaction tx )
+            {
+                return 42;
+            }
+        };
+        session.readTransaction( work2 );
+
+        StatementResult result1 = session.readTransaction( tx -> tx.run( "RETURN 1" ) );
+
+        Long result2 = session.readTransaction( NetworkSessionTest::work1 );
+        Long result3 = session.readTransaction( NetworkSessionTest::work2 );
+
+        try
+        {
+            Long result4 = session.readTransaction( NetworkSessionTest::work3 );
+        }
+        catch ( SQLException e )
+        {
+            e.printStackTrace();
+        }
+
+        try
+        {
+            Integer result5 = session.readTransaction( tx ->
+            {
+                if ( Math.random() > 4 )
+                {
+                    throw new IOException();
+                }
+                return 1;
+            } );
+        }
+        catch ( IOException e )
+        {
+            e.printStackTrace();
+        }
+    }
+
+    static Long work1( Transaction tx )
+    {
+        return 42L;
+    }
+
+    static Long work2( Transaction tx ) throws IllegalArgumentException
+    {
+        if ( tx == null )
+        {
+            throw new IllegalArgumentException();
+        }
+        return 42L;
+    }
+
+    static Long work3( Transaction tx ) throws SQLException
+    {
+        if ( tx == null )
+        {
+            throw new SQLException();
+        }
+        return 42L;
+    }
+
     private static void testConnectionAcquisition( AccessMode sessionMode, AccessMode transactionMode )
     {
         ConnectionProvider connectionProvider = mock( ConnectionProvider.class );
@@ -764,10 +883,10 @@ public class NetworkSessionTest
         when( connectionProvider.acquireConnection( transactionMode ) ).thenReturn( connection );
         NetworkSession session = newSession( connectionProvider, sessionMode );
 
-        Function<Transaction,Integer> work = new Function<Transaction,Integer>()
+        TransactionWork<Integer,RuntimeException> work = new TransactionWork<Integer,RuntimeException>()
         {
             @Override
-            public Integer apply( Transaction tx )
+            public Integer execute( Transaction tx ) throws RuntimeException
             {
                 tx.success();
                 return 42;
@@ -789,10 +908,10 @@ public class NetworkSessionTest
         when( connectionProvider.acquireConnection( transactionMode ) ).thenReturn( connection );
         NetworkSession session = newSession( connectionProvider, WRITE );
 
-        Function<Transaction,Integer> work = new Function<Transaction,Integer>()
+        TransactionWork<Integer,RuntimeException> work = new TransactionWork<Integer,RuntimeException>()
         {
             @Override
-            public Integer apply( Transaction tx )
+            public Integer execute( Transaction tx ) throws RuntimeException
             {
                 if ( commit )
                 {
@@ -831,10 +950,10 @@ public class NetworkSessionTest
         NetworkSession session = newSession( connectionProvider, WRITE );
 
         final RuntimeException error = new IllegalStateException( "Oh!" );
-        Function<Transaction,Void> work = new Function<Transaction,Void>()
+        TransactionWork<Void,RuntimeException> work = new TransactionWork<Void,RuntimeException>()
         {
             @Override
-            public Void apply( Transaction tx )
+            public Void execute( Transaction tx ) throws RuntimeException
             {
                 throw error;
             }
@@ -864,12 +983,12 @@ public class NetworkSessionTest
         when( connectionProvider.acquireConnection( mode ) ).thenReturn( connection );
         NetworkSession session = newSession( connectionProvider, retryLogic );
 
-        int answer = executeTransaction( session, mode, new Function<Transaction,Integer>()
+        int answer = executeTransaction( session, mode, new TransactionWork<Integer,RuntimeException>()
         {
             int invoked;
 
             @Override
-            public Integer apply( Transaction tx )
+            public Integer execute( Transaction tx )
             {
                 if ( invoked++ < failures )
                 {
@@ -896,10 +1015,10 @@ public class NetworkSessionTest
         when( connectionProvider.acquireConnection( mode ) ).thenReturn( connection );
         NetworkSession session = newSession( connectionProvider, retryLogic );
 
-        int answer = executeTransaction( session, mode, new Function<Transaction,Integer>()
+        int answer = executeTransaction( session, mode, new TransactionWork<Integer,RuntimeException>()
         {
             @Override
-            public Integer apply( Transaction tx )
+            public Integer execute( Transaction tx )
             {
                 tx.success();
                 return 43;
@@ -925,12 +1044,12 @@ public class NetworkSessionTest
 
         try
         {
-            executeTransaction( session, mode, new Function<Transaction,Integer>()
+            executeTransaction( session, mode, new TransactionWork<Integer,RuntimeException>()
             {
                 int invoked;
 
                 @Override
-                public Integer apply( Transaction tx )
+                public Integer execute( Transaction tx )
                 {
                     if ( invoked++ < failures )
                     {
@@ -963,10 +1082,10 @@ public class NetworkSessionTest
 
         try
         {
-            executeTransaction( session, mode, new Function<Transaction,Integer>()
+            executeTransaction( session, mode, new TransactionWork<Integer,RuntimeException>()
             {
                 @Override
-                public Integer apply( Transaction tx )
+                public Integer execute( Transaction tx )
                 {
                     tx.success();
                     return 42;
@@ -992,12 +1111,12 @@ public class NetworkSessionTest
 
         try
         {
-            executeTransaction( session, mode, new Function<Transaction,Integer>()
+            executeTransaction( session, mode, new TransactionWork<Integer,RuntimeException>()
             {
                 int invoked;
 
                 @Override
-                public Integer apply( Transaction tx )
+                public Integer execute( Transaction tx )
                 {
                     if ( invoked++ < failures )
                     {
@@ -1035,12 +1154,12 @@ public class NetworkSessionTest
         final ServiceUnavailableException error = new ServiceUnavailableException( "Oh!" );
         try
         {
-            executeTransaction( session, mode, new Function<Transaction,Integer>()
+            executeTransaction( session, mode, new TransactionWork<Integer,RuntimeException>()
             {
                 int invoked;
 
                 @Override
-                public Integer apply( Transaction tx )
+                public Integer execute( Transaction tx )
                 {
                     if ( invoked++ < failures )
                     {
@@ -1060,7 +1179,7 @@ public class NetworkSessionTest
         }
     }
 
-    private static <T> T executeTransaction( Session session, AccessMode mode, Function<Transaction,T> work )
+    private static <T> T executeTransaction( Session session, AccessMode mode, TransactionWork<T, RuntimeException> work )
     {
         if ( mode == READ )
         {
