@@ -49,7 +49,6 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -479,7 +478,7 @@ public class NetworkSessionTest
 
         session.onConnectionError( true );
 
-        assertFalse( tx.isOpen() );
+        assertTrue( tx.isOpen() );
     }
 
     @Test
@@ -495,7 +494,7 @@ public class NetworkSessionTest
 
         session.onConnectionError( false );
 
-        assertFalse( tx.isOpen() );
+        assertTrue( tx.isOpen() );
     }
 
     @Test

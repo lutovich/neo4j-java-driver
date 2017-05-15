@@ -44,25 +44,33 @@ public class ExplicitTransaction implements Transaction
     private enum State
     {
         /** The transaction is running with no explicit success or failure marked */
-        ACTIVE,
+        ACTIVE( true ),
 
         /** Running, user marked for success, meaning it'll value committed */
-        MARKED_SUCCESS,
+        MARKED_SUCCESS( true ),
 
         /** User marked as failed, meaning it'll be rolled back. */
-        MARKED_FAILED,
+        MARKED_FAILED( true ),
 
         /**
          * An error has occurred, transaction can no longer be used and no more messages will be sent for this
          * transaction.
          */
-        FAILED,
+        FAILED( true ),
+        // todo: this state can be removed, right?
 
         /** This transaction has successfully committed */
-        SUCCEEDED,
+        SUCCEEDED( false ),
 
         /** This transaction has been rolled back */
-        ROLLED_BACK
+        ROLLED_BACK( false );
+
+        final boolean txOpen;
+
+        State( boolean txOpen )
+        {
+            this.txOpen = txOpen;
+        }
     }
 
     private final SessionResourcesHandler resourcesHandler;
@@ -206,7 +214,7 @@ public class ExplicitTransaction implements Transaction
     @Override
     public boolean isOpen()
     {
-        return state == State.ACTIVE;
+        return state.txOpen;
     }
 
     private void ensureNotFailed()
