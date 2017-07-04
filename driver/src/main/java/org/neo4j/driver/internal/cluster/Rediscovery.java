@@ -43,6 +43,10 @@ public class Rediscovery
     private final ClusterCompositionProvider provider;
     private final HostNameResolver hostNameResolver;
 
+    // todo: is it ok to not round-robin over routers but instead just call them in order? they should be randomized
+    // by the server any way...
+    private final LoadBalancingStrategy fakeLoadBalancingStrategy = new RoundRobinLoadBalancingStrategy();
+
     private boolean useInitialRouter;
 
     public Rediscovery( BoltServerAddress initialRouter, RoutingSettings settings, Clock clock, Logger logger,
@@ -136,10 +140,12 @@ public class Rediscovery
     private ClusterComposition lookupOnKnownRouters( RoutingTable routingTable, ConnectionPool connections,
             Set<BoltServerAddress> seenServers )
     {
-        int size = routingTable.routerSize();
+        BoltServerAddress[] addresses = routingTable.routers().toArray();
+
+        int size = addresses.length;
         for ( int i = 0; i < size; i++ )
         {
-            BoltServerAddress address = routingTable.nextRouter();
+            BoltServerAddress address = fakeLoadBalancingStrategy.selectReader( addresses );
             if ( address == null )
             {
                 break;

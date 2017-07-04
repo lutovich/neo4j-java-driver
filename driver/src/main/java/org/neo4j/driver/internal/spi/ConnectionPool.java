@@ -37,4 +37,6 @@ public interface ConnectionPool extends AutoCloseable
     void purge( BoltServerAddress address );
 
     boolean hasAddress( BoltServerAddress address );
+
+    int activeConnections( BoltServerAddress address );
 }
