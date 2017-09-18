@@ -21,6 +21,7 @@ package org.neo4j.driver.internal.async;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
 
@@ -29,9 +30,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.neo4j.driver.v1.Response;
+import org.neo4j.driver.v1.ResponseListener;
 import org.neo4j.driver.v1.util.Function;
 
-public class InternalPromise<T> implements InternalFuture<T>, Promise<T>
+public class InternalPromise<T> implements InternalFuture<T>, Promise<T>, Response<T>
 {
     private final EventLoop eventLoop;
     private final Promise<T> delegate;
@@ -54,12 +56,6 @@ public class InternalPromise<T> implements InternalFuture<T>, Promise<T>
     }
 
     @Override
-    public Response<T> asResponse()
-    {
-        return new InternalResponse<>( this );
-    }
-
-    @Override
     public <U> InternalFuture<U> thenApply( Function<T,U> fn )
     {
         return Futures.thenApply( this, fn );
@@ -75,6 +71,26 @@ public class InternalPromise<T> implements InternalFuture<T>, Promise<T>
     public InternalFuture<T> whenComplete( Runnable action )
     {
         return Futures.whenComplete( this, action );
+    }
+
+    @Override
+    public void addListener( final ResponseListener<T> listener )
+    {
+        delegate.addListener( new FutureListener<T>()
+        {
+            @Override
+            public void operationComplete( Future<T> future )
+            {
+                if ( future.isSuccess() )
+                {
+                    listener.operationCompleted( future.getNow(), null );
+                }
+                else
+                {
+                    listener.operationCompleted( null, future.cause() );
+                }
+            }
+        } );
     }
 
     @Override

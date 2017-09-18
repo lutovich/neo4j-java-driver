@@ -211,7 +211,7 @@ public class ExplicitTransaction implements Transaction, ResultResourcesHandler
     @Override
     public Response<Void> commitAsync()
     {
-        return internalCommitAsync().asResponse();
+        return internalCommitAsync();
     }
 
     InternalFuture<Void> internalCommitAsync()
@@ -234,7 +234,7 @@ public class ExplicitTransaction implements Transaction, ResultResourcesHandler
     @Override
     public Response<Void> rollbackAsync()
     {
-        return internalRollbackAsync().asResponse();
+        return internalRollbackAsync();
     }
 
     InternalFuture<Void> internalRollbackAsync()
@@ -385,7 +385,7 @@ public class ExplicitTransaction implements Transaction, ResultResourcesHandler
     public Response<StatementResultCursor> runAsync( Statement statement )
     {
         ensureNotFailed();
-        return QueryRunner.runAsync( asyncConnection, statement, this ).asResponse();
+        return QueryRunner.runAsync( asyncConnection, statement, this );
     }
 
     @Override

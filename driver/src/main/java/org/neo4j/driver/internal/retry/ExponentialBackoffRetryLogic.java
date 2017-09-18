@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.neo4j.driver.internal.async.InternalFuture;
 import org.neo4j.driver.internal.util.Clock;
 import org.neo4j.driver.internal.util.Supplier;
 import org.neo4j.driver.v1.Logger;
@@ -107,6 +108,12 @@ public class ExponentialBackoffRetryLogic implements RetryLogic
                 throw error;
             }
         }
+    }
+
+    @Override
+    public <T> InternalFuture<T> retryAsync( Supplier<InternalFuture<T>> work )
+    {
+        return null;
     }
 
     private long computeDelayWithJitter( long delayMs )

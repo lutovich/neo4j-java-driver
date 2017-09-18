@@ -19,10 +19,14 @@
 package org.neo4j.driver.internal.async;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.EventLoopGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
 
+import org.neo4j.driver.internal.util.Consumer;
+import org.neo4j.driver.v1.Response;
+import org.neo4j.driver.v1.ResponseListener;
 import org.neo4j.driver.v1.util.Function;
 
 public final class Futures
@@ -52,11 +56,32 @@ public final class Futures
         return result;
     }
 
-    public static <T> InternalFuture<T> whenComplete( InternalFuture<T> future, Runnable action )
+    public static <T> InternalFuture<T> whenComplete( InternalFuture<T> future, Consumer<Boolean> action )
     {
         InternalPromise<T> result = new InternalPromise<>( future.eventLoop() );
         future.addListener( new CompletionListener<>( result, action ) );
         return result;
+    }
+
+    public static <T> InternalFuture<T> from( Response<T> response, EventLoopGroup eventLoopGroup )
+    {
+        final InternalPromise<T> resultPromise = new InternalPromise<>( eventLoopGroup.next() );
+        response.addListener( new ResponseListener<T>()
+        {
+            @Override
+            public void operationCompleted( T result, Throwable error )
+            {
+                if ( error != null )
+                {
+                    resultPromise.setFailure( error );
+                }
+                else
+                {
+                    resultPromise.setSuccess( result );
+                }
+            }
+        } );
+        return resultPromise;
     }
 
     private static class ThenApplyListener<T, U> implements GenericFutureListener<Future<T>>
@@ -168,9 +193,9 @@ public final class Futures
     private static class CompletionListener<T> implements GenericFutureListener<Future<T>>
     {
         final Promise<T> result;
-        final Runnable action;
+        final Consumer<Boolean> action;
 
-        CompletionListener( Promise<T> result, Runnable action )
+        CompletionListener( Promise<T> result, Consumer<Boolean> action )
         {
             this.result = result;
             this.action = action;
@@ -187,7 +212,7 @@ public final class Futures
             {
                 try
                 {
-                    action.run();
+                    action.accept( true );
                     result.setSuccess( future.getNow() );
                 }
                 catch ( Throwable t )
@@ -200,7 +225,7 @@ public final class Futures
                 Throwable error = future.cause();
                 try
                 {
-                    action.run();
+                    action.accept( false );
                 }
                 catch ( Throwable t )
                 {

@@ -18,7 +18,11 @@
  */
 package org.neo4j.driver.internal;
 
-import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.channel.DefaultEventLoop;
+import io.netty.channel.EventLoopGroup;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.FutureListener;
+import io.netty.util.concurrent.ImmediateEventExecutor;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.neo4j.driver.ResultResourcesHandler;
 import org.neo4j.driver.internal.async.AsyncConnection;
 import org.neo4j.driver.internal.async.InternalFuture;
-import org.neo4j.driver.internal.async.InternalResponse;
+import org.neo4j.driver.internal.async.InternalPromise;
 import org.neo4j.driver.internal.async.QueryRunner;
 import org.neo4j.driver.internal.logging.DelegatingLogger;
 import org.neo4j.driver.internal.retry.RetryLogic;
@@ -40,6 +44,7 @@ import org.neo4j.driver.v1.Logger;
 import org.neo4j.driver.v1.Logging;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Response;
+import org.neo4j.driver.v1.ResponseListener;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Statement;
 import org.neo4j.driver.v1.StatementResult;
@@ -61,6 +66,7 @@ public class NetworkSession implements Session, SessionResourcesHandler, ResultR
     private final ConnectionProvider connectionProvider;
     private final AccessMode mode;
     private final RetryLogic retryLogic;
+    private final EventLoopGroup eventLoopGroup;
     protected final Logger logger;
 
     private volatile Bookmark bookmark = Bookmark.empty();
@@ -75,9 +81,16 @@ public class NetworkSession implements Session, SessionResourcesHandler, ResultR
     public NetworkSession( ConnectionProvider connectionProvider, AccessMode mode, RetryLogic retryLogic,
             Logging logging )
     {
+        this( connectionProvider, mode, retryLogic, new DefaultEventLoop( ImmediateEventExecutor.INSTANCE ), logging );
+    }
+
+    public NetworkSession( ConnectionProvider connectionProvider, AccessMode mode, RetryLogic retryLogic,
+            EventLoopGroup eventLoopGroup, Logging logging )
+    {
         this.connectionProvider = connectionProvider;
         this.mode = mode;
         this.retryLogic = retryLogic;
+        this.eventLoopGroup = eventLoopGroup;
         this.logger = new DelegatingLogger( logging.getLog( LOG_NAME ), String.valueOf( hashCode() ) );
     }
 
@@ -160,7 +173,7 @@ public class NetworkSession implements Session, SessionResourcesHandler, ResultR
             {
                 return QueryRunner.runAsync( connection, statement );
             }
-        } ).asResponse();
+        } );
     }
 
     public static StatementResult run( Connection connection, Statement statement,
@@ -247,7 +260,7 @@ public class NetworkSession implements Session, SessionResourcesHandler, ResultR
                 {
                     return connection.forceRelease();
                 }
-            } ).asResponse();
+            } );
         }
         else if ( currentAsyncTransactionFuture != null )
         {
@@ -258,11 +271,11 @@ public class NetworkSession implements Session, SessionResourcesHandler, ResultR
                 {
                     return tx.internalRollbackAsync();
                 }
-            } ).asResponse();
+            } );
         }
         else
         {
-            return new InternalResponse<>( GlobalEventExecutor.INSTANCE.<Void>newSucceededFuture( null ) );
+            return new InternalPromise<Void>( eventLoopGroup.next() ).setSuccess( null );
         }
     }
 
@@ -290,6 +303,96 @@ public class NetworkSession implements Session, SessionResourcesHandler, ResultR
     public <T> T readTransaction( TransactionWork<T> work )
     {
         return transaction( AccessMode.READ, work );
+    }
+
+    @Override
+    public <T> Response<T> readTransactionAsync( final TransactionWork<Response<T>> work )
+    {
+        return retryLogic.retryAsync( new Supplier<InternalFuture<T>>()
+        {
+            @Override
+            public InternalFuture<T> get()
+            {
+                final InternalPromise<T> resultPromise = new InternalPromise<>( eventLoopGroup.next() );
+
+                InternalFuture<Transaction> txFuture = beginTransactionAsync( AccessMode.READ );
+
+                txFuture.addListener( new FutureListener<Transaction>()
+                {
+                    @Override
+                    public void operationComplete( Future<Transaction> future ) throws Exception
+                    {
+                        if ( future.isCancelled() )
+                        {
+                            resultPromise.cancel( true );
+                        }
+                        else if ( future.isSuccess() )
+                        {
+                            final Transaction tx = future.getNow();
+                            Response<T> workResponse = work.execute( tx );
+                            workResponse.addListener( new ResponseListener<T>()
+                            {
+                                @Override
+                                public void operationCompleted( final T result, final Throwable workError )
+                                {
+                                    if ( workError != null )
+                                    {
+                                        if ( tx.isOpen() )
+                                        {
+                                            tx.rollbackAsync().addListener( new ResponseListener<Void>()
+                                            {
+                                                @Override
+                                                public void operationCompleted( Void ignore, Throwable rollbackError )
+                                                {
+                                                    if ( rollbackError != null )
+                                                    {
+                                                        workError.addSuppressed( rollbackError );
+
+                                                    }
+                                                    resultPromise.setFailure( workError );
+                                                }
+                                            } );
+                                        }
+                                        else
+                                        {
+                                            resultPromise.setFailure( workError );
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if ( tx.isOpen() )
+                                        {
+                                            tx.commitAsync().addListener( new ResponseListener<Void>()
+                                            {
+                                                @Override
+                                                public void operationCompleted( Void ignore, Throwable error )
+                                                {
+                                                    if ( error != null )
+                                                    {
+                                                        resultPromise.setFailure( error );
+                                                    }else {
+                                                        resultPromise.setSuccess( result );
+                                                    }
+                                                }
+                                            } );
+                                        }
+                                        else
+                                        {
+                                            resultPromise.setSuccess( result );
+                                        }
+                                    }
+                                }
+                            } );
+                        }
+                        else
+                        {
+                            resultPromise.setFailure( future.cause() );
+                        }
+                    }
+                } );
+                return resultPromise;
+            }
+        } );
     }
 
     @Override
@@ -412,7 +515,7 @@ public class NetworkSession implements Session, SessionResourcesHandler, ResultR
         return currentTransaction;
     }
 
-    private synchronized Response<Transaction> beginTransactionAsync( AccessMode mode )
+    private synchronized InternalFuture<Transaction> beginTransactionAsync( AccessMode mode )
     {
         ensureSessionIsOpen();
         ensureNoOpenTransactionBeforeOpeningTransaction();
@@ -431,7 +534,7 @@ public class NetworkSession implements Session, SessionResourcesHandler, ResultR
                 } );
 
         //noinspection unchecked
-        return (Response) currentAsyncTransactionFuture.asResponse();
+        return (InternalFuture) currentAsyncTransactionFuture;
     }
 
     private void ensureNoUnrecoverableError()

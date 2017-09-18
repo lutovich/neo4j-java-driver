@@ -96,6 +96,8 @@ public interface Session extends Resource, StatementRunner
      */
     <T> T readTransaction( TransactionWork<T> work );
 
+    <T> Response<T> readTransactionAsync( TransactionWork<Response<T>> work );
+
     /**
      * Execute given unit of work in a {@link AccessMode#WRITE write} transaction.
      * <p>

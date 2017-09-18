@@ -19,6 +19,7 @@
 package org.neo4j.driver.internal;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.EventLoopGroup;
 
 import java.io.IOException;
 import java.net.URI;
@@ -72,14 +73,15 @@ public class DriverFactory
         RoutingSettings newRoutingSettings = routingSettings.withRoutingContext( new RoutingContext( uri ) );
         SecurityPlan securityPlan = createSecurityPlan( address, config );
         ConnectionPool connectionPool = createConnectionPool( authToken, securityPlan, config );
-        RetryLogic retryLogic = createRetryLogic( retrySettings, config.logging() );
 
-        AsyncConnectionPool asyncConnectionPool = createAsyncConnectionPool( authToken, securityPlan, config );
+        Bootstrap bootstrap = BootstrapFactory.newBootstrap();
+        RetryLogic retryLogic = createRetryLogic( retrySettings, bootstrap.config().group(), config.logging() );
+        AsyncConnectionPool asyncPool = createAsyncConnectionPool( authToken, securityPlan, bootstrap, config );
 
         try
         {
             return createDriver( uri, address, connectionPool, config, newRoutingSettings, securityPlan, retryLogic,
-                    asyncConnectionPool );
+                    asyncPool );
         }
         catch ( Throwable driverError )
         {
@@ -87,7 +89,7 @@ public class DriverFactory
             try
             {
                 connectionPool.close();
-                asyncConnectionPool.closeAsync().syncUninterruptibly();
+                asyncPool.closeAsync().syncUninterruptibly();
             }
             catch ( Throwable closeError )
             {
@@ -98,14 +100,13 @@ public class DriverFactory
     }
 
     private AsyncConnectionPool createAsyncConnectionPool( AuthToken authToken, SecurityPlan securityPlan,
-            Config config )
+            Bootstrap bootstrap, Config config )
     {
         Clock clock = createClock();
         ConnectionSettings connectionSettings = new ConnectionSettings( authToken, config.connectionTimeoutMillis() );
         ActiveChannelTracker activeChannelTracker = new ActiveChannelTracker( config.logging() );
         AsyncConnectorImpl connector = new AsyncConnectorImpl( connectionSettings, securityPlan,
                 activeChannelTracker, config.logging(), clock );
-        Bootstrap bootstrap = BootstrapFactory.newBootstrap();
         PoolSettings poolSettings = new PoolSettings( config.maxIdleConnectionPoolSize(),
                 config.idleTimeBeforeConnectionTest(), config.maxConnectionLifetimeMillis(),
                 config.maxConnectionPoolSize(),
@@ -250,7 +251,7 @@ public class DriverFactory
      * <p>
      * <b>This method is protected only for testing</b>
      */
-    protected RetryLogic createRetryLogic( RetrySettings settings, Logging logging )
+    protected RetryLogic createRetryLogic( RetrySettings settings, EventLoopGroup eventLoopGroup, Logging logging )
     {
         return new ExponentialBackoffRetryLogic( settings, createClock(), logging );
     }
