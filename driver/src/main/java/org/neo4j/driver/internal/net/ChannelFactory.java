@@ -21,6 +21,7 @@ package org.neo4j.driver.internal.net;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.net.StandardSocketOptions;
 import java.nio.channels.ByteChannel;
@@ -38,7 +39,7 @@ class ChannelFactory
         SocketChannel soChannel = SocketChannel.open();
         soChannel.setOption( StandardSocketOptions.SO_REUSEADDR, true );
         soChannel.setOption( StandardSocketOptions.SO_KEEPALIVE, true );
-        connect( soChannel, address, timeoutMillis );
+        connect( soChannel, address, log, timeoutMillis );
 
         ByteChannel channel = soChannel;
 
@@ -70,16 +71,20 @@ class ChannelFactory
         return channel;
     }
 
-    private static void connect( SocketChannel soChannel, BoltServerAddress address, int timeoutMillis )
+    private static void connect( SocketChannel soChannel, BoltServerAddress address, Logger log, int timeoutMillis )
             throws IOException
     {
         Socket socket = soChannel.socket();
+        SocketAddress dbAddress = address.toSocketAddress();
         try
         {
-            socket.connect( address.toSocketAddress(), timeoutMillis );
+            log.info( "Thread " + Thread.currentThread() + " connecting to " + dbAddress );
+            socket.connect( dbAddress, timeoutMillis );
+            log.info( "Thread " + Thread.currentThread() + " connected to " + dbAddress );
         }
         catch ( SocketTimeoutException e )
         {
+            log.info( "Thread " + Thread.currentThread() + " failed to connect to " + dbAddress );
             throw new ConnectException( "Timeout " + timeoutMillis + "ms expired" + e );
         }
     }
