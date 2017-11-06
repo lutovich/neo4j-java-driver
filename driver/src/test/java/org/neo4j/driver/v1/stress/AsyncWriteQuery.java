@@ -24,7 +24,6 @@ import org.neo4j.driver.internal.util.Futures;
 import org.neo4j.driver.v1.AccessMode;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.Session;
-import org.neo4j.driver.v1.StatementResultCursor;
 
 import static org.junit.Assert.assertEquals;
 
@@ -44,7 +43,7 @@ public class AsyncWriteQuery<C extends AbstractContext> extends AbstractAsyncQue
         Session session = newSession( AccessMode.WRITE, context );
 
         return session.runAsync( "CREATE ()" )
-                .thenCompose( StatementResultCursor::summaryAsync )
+                .summaryAsync()
                 .handle( ( summary, error ) ->
                 {
                     session.closeAsync();

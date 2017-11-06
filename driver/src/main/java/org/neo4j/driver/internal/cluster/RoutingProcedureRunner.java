@@ -29,9 +29,9 @@ import org.neo4j.driver.internal.util.Futures;
 import org.neo4j.driver.internal.util.ServerVersion;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Statement;
-import org.neo4j.driver.v1.StatementResultCursor;
 import org.neo4j.driver.v1.exceptions.ClientException;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.neo4j.driver.internal.util.ServerVersion.v3_2_0;
 import static org.neo4j.driver.v1.Values.parameters;
 
@@ -70,8 +70,7 @@ public class RoutingProcedureRunner
 
     CompletionStage<List<Record>> runProcedure( Connection connection, Statement procedure )
     {
-        return QueryRunner.runAsAsync( connection, procedure )
-                .thenCompose( StatementResultCursor::listAsync );
+        return QueryRunner.run( completedFuture( connection ), procedure, null, true ).listAsync();
     }
 
     private Statement procedureStatement( ServerVersion serverVersion )

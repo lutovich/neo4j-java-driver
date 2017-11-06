@@ -107,15 +107,6 @@ public class NettyConnection implements Connection
     }
 
     @Override
-    public void releaseInBackground()
-    {
-        if ( state.release() )
-        {
-            reset( new ResetResponseHandler( channel, channelPool, messageDispatcher, clock ) );
-        }
-    }
-
-    @Override
     public CompletionStage<Void> releaseNow()
     {
         if ( state.forceRelease() )

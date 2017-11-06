@@ -19,7 +19,6 @@
 package org.neo4j.driver.internal.async;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.neo4j.driver.internal.ExplicitTransaction;
@@ -31,7 +30,6 @@ import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.v1.Statement;
 import org.neo4j.driver.v1.Value;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.neo4j.driver.v1.Values.ofValue;
 
 // todo: better method naming in this class and tests!
@@ -41,61 +39,35 @@ public final class QueryRunner
     {
     }
 
-    public static CompletionStage<InternalStatementResultCursor> runAsBlocking( Connection connection,
-            Statement statement )
-    {
-        return runAsBlocking( connection, statement, null );
-    }
-
-    public static CompletionStage<InternalStatementResultCursor> runAsBlocking( Connection connection,
-            Statement statement, ExplicitTransaction tx )
-    {
-        return runAsAsync( connection, statement, tx, false );
-    }
-
-    public static CompletionStage<InternalStatementResultCursor> runAsAsync( Connection connection,
-            Statement statement )
-    {
-        return runAsAsync( connection, statement, null );
-    }
-
-    public static CompletionStage<InternalStatementResultCursor> runAsAsync( Connection connection,
-            Statement statement, ExplicitTransaction tx )
-    {
-        return runAsAsync( connection, statement, tx, true );
-    }
-
-    private static CompletionStage<InternalStatementResultCursor> runAsAsync( Connection connection,
-            Statement statement, ExplicitTransaction tx, boolean async )
+    public static InternalStatementResultCursor run( CompletionStage<Connection> connectionStage, Statement statement,
+            ExplicitTransaction tx, boolean async )
     {
         String query = statement.text();
         Map<String,Value> params = statement.parameters().asMap( ofValue() );
 
-        CompletableFuture<Void> runCompletedFuture = new CompletableFuture<>();
-        RunResponseHandler runHandler = new RunResponseHandler( runCompletedFuture );
-        PullAllResponseHandler pullAllHandler = newPullAllHandler( statement, runHandler, connection, tx );
+        RunResponseHandler runHandler = new RunResponseHandler();
+        PullAllResponseHandler pullAllHandler = newPullAllHandler( statement, runHandler, connectionStage, tx );
 
-        connection.runAndFlush( query, params, runHandler, pullAllHandler );
+        connectionStage.thenAccept( connection ->
+                connection.runAndFlush( query, params, runHandler, pullAllHandler ) );
 
         if ( async )
         {
-            // wait for response of RUN before proceeding when execution is async
-            return runCompletedFuture.thenApply( ignore ->
-                    InternalStatementResultCursor.forAsyncRun( runHandler, pullAllHandler ) );
+            return InternalStatementResultCursor.forAsyncRun( runHandler, pullAllHandler, connectionStage );
         }
         else
         {
-            return completedFuture( InternalStatementResultCursor.forBlockingRun( runHandler, pullAllHandler ) );
+            return InternalStatementResultCursor.forBlockingRun( runHandler, pullAllHandler, connectionStage );
         }
     }
 
     private static PullAllResponseHandler newPullAllHandler( Statement statement, RunResponseHandler runHandler,
-            Connection connection, ExplicitTransaction tx )
+            CompletionStage<Connection> connectionStage, ExplicitTransaction tx )
     {
         if ( tx != null )
         {
-            return new TransactionPullAllResponseHandler( statement, runHandler, connection, tx );
+            return new TransactionPullAllResponseHandler( statement, runHandler, connectionStage, tx );
         }
-        return new SessionPullAllResponseHandler( statement, runHandler, connection );
+        return new SessionPullAllResponseHandler( statement, runHandler, connectionStage );
     }
 }

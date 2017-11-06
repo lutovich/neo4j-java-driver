@@ -35,6 +35,7 @@ import org.neo4j.driver.internal.summary.InternalProfiledPlan;
 import org.neo4j.driver.internal.summary.InternalResultSummary;
 import org.neo4j.driver.internal.summary.InternalServerInfo;
 import org.neo4j.driver.internal.summary.InternalSummaryCounters;
+import org.neo4j.driver.internal.util.Futures;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Statement;
 import org.neo4j.driver.v1.Value;
@@ -56,7 +57,7 @@ public abstract class PullAllResponseHandler implements ResponseHandler
 
     private final Statement statement;
     private final RunResponseHandler runResponseHandler;
-    protected final Connection connection;
+    protected final CompletionStage<Connection> connectionStage;
 
     private final Queue<Record> records = new LinkedList<>();
 
@@ -68,11 +69,12 @@ public abstract class PullAllResponseHandler implements ResponseHandler
     private CompletableFuture<ResultSummary> summaryFuture;
     private CompletableFuture<Throwable> failureFuture;
 
-    public PullAllResponseHandler( Statement statement, RunResponseHandler runResponseHandler, Connection connection )
+    public PullAllResponseHandler( Statement statement, RunResponseHandler runResponseHandler,
+            CompletionStage<Connection> connectionStage )
     {
         this.statement = requireNonNull( statement );
         this.runResponseHandler = requireNonNull( runResponseHandler );
-        this.connection = requireNonNull( connection );
+        this.connectionStage = requireNonNull( connectionStage );
     }
 
     @Override
@@ -130,7 +132,9 @@ public abstract class PullAllResponseHandler implements ResponseHandler
     @Override
     public synchronized void onRecord( Value[] fields )
     {
-        Record record = new InternalRecord( runResponseHandler.statementKeys(), fields );
+        // todo: memorize statementKeys list
+        List<String> statementKeys = Futures.getNotNullFromCompleted( runResponseHandler.statementKeysStage() );
+        Record record = new InternalRecord( statementKeys, fields );
         queueRecord( record );
         completeRecordFuture( record );
     }
@@ -214,7 +218,7 @@ public abstract class PullAllResponseHandler implements ResponseHandler
         {
             if ( records.size() > 10_000 )
             {
-                connection.disableAutoRead();
+                connectionStage.thenAccept( Connection::disableAutoRead );
             }
         }
     }
@@ -226,7 +230,7 @@ public abstract class PullAllResponseHandler implements ResponseHandler
         {
             if ( record != null && records.size() < 100 )
             {
-                connection.enableAutoRead();
+                connectionStage.thenAccept( Connection::enableAutoRead );
             }
         }
         return record;
@@ -302,12 +306,14 @@ public abstract class PullAllResponseHandler implements ResponseHandler
 
     private ResultSummary extractResultSummary( Map<String,Value> metadata )
     {
+        Connection connection = Futures.getNotNullFromCompleted( connectionStage );
+        long resultAvailableAfter = Futures.getNotNullFromCompleted( runResponseHandler.resultAvailableAfterStage() );
+
         InternalServerInfo serverInfo = new InternalServerInfo( connection.serverAddress(),
                 connection.serverVersion() );
         return new InternalResultSummary( statement, serverInfo, extractStatementType( metadata ),
                 extractCounters( metadata ), extractPlan( metadata ), extractProfiledPlan( metadata ),
-                extractNotifications( metadata ), runResponseHandler.resultAvailableAfter(),
-                extractResultConsumedAfter( metadata ) );
+                extractNotifications( metadata ), resultAvailableAfter, extractResultConsumedAfter( metadata ) );
     }
 
     private static StatementType extractStatementType( Map<String,Value> metadata )

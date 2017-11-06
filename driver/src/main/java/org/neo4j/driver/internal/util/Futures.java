@@ -116,4 +116,19 @@ public final class Futures
         }
         return error;
     }
+
+    public static <T> T getNotNullFromCompleted( CompletionStage<T> stage )
+    {
+        CompletableFuture<T> future = stage.toCompletableFuture();
+        if ( !future.isDone() || future.isCompletedExceptionally() )
+        {
+            throw new IllegalStateException(); // todo
+        }
+        T value = future.getNow( null );
+        if ( value == null )
+        {
+            throw new IllegalStateException(); // todo
+        }
+        return value;
+    }
 }

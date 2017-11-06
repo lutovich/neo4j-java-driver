@@ -18,26 +18,34 @@
  */
 package org.neo4j.driver.internal.handlers;
 
+import java.util.concurrent.CompletionStage;
+
 import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.v1.Statement;
 
 public class SessionPullAllResponseHandler extends PullAllResponseHandler
 {
     public SessionPullAllResponseHandler( Statement statement, RunResponseHandler runResponseHandler,
-            Connection connection )
+            CompletionStage<Connection> connectionStage )
     {
-        super( statement, runResponseHandler, connection );
+        super( statement, runResponseHandler, connectionStage );
     }
 
     @Override
     protected void afterSuccess()
     {
-        connection.releaseInBackground();
+        releaseConnection();
     }
 
     @Override
     protected void afterFailure( Throwable error )
     {
-        connection.releaseInBackground();
+        releaseConnection();
+    }
+
+    private void releaseConnection()
+    {
+        connectionStage
+                .thenAccept( Connection::releaseNow ); // todo: we do not wait, release in the background, document this
     }
 }

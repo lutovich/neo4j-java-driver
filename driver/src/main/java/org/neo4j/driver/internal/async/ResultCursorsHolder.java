@@ -27,26 +27,24 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class ResultCursorsHolder
 {
-    private final List<CompletionStage<InternalStatementResultCursor>> cursorStages = new ArrayList<>();
+    private final List<InternalStatementResultCursor> cursors = new ArrayList<>();
 
-    public void add( CompletionStage<InternalStatementResultCursor> cursorStage )
+    public void add( InternalStatementResultCursor cursor )
     {
-        Objects.requireNonNull( cursorStage );
-        cursorStages.add( cursorStage );
+        Objects.requireNonNull( cursor );
+        cursors.add( cursor );
     }
 
     public CompletionStage<Throwable> retrieveNotConsumedError()
     {
-        return cursorStages.stream()
+        return cursors.stream()
                 .map( this::retrieveFailure )
                 .reduce( completedFuture( null ), this::nonNullFailureFromEither );
     }
 
-    private CompletionStage<Throwable> retrieveFailure( CompletionStage<InternalStatementResultCursor> cursorStage )
+    private CompletionStage<Throwable> retrieveFailure( InternalStatementResultCursor cursor )
     {
-        return cursorStage
-                .exceptionally( cursor -> null )
-                .thenCompose( cursor -> cursor == null ? completedFuture( null ) : cursor.failureAsync() );
+        return cursor.failureAsync().exceptionally( error -> null );
     }
 
     private CompletionStage<Throwable> nonNullFailureFromEither( CompletionStage<Throwable> stage1,

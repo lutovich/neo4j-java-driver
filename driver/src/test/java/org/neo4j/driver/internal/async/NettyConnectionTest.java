@@ -78,15 +78,9 @@ public class NettyConnectionTest
     }
 
     @Test
-    public void shouldWriteReleaseInEventLoopThread() throws Exception
-    {
-        testWriteInEventLoop( "ReleaseTestEventLoop", NettyConnection::releaseInBackground );
-    }
-
-    @Test
     public void shouldWriteForceReleaseInEventLoopThread() throws Exception
     {
-        testWriteInEventLoop( "ReleaseNowTestEventLoop", NettyConnection::releaseNow );
+        testWriteInEventLoop( "ReleaseTestEventLoop", NettyConnection::releaseNow );
     }
 
     private void testWriteInEventLoop( String threadName, Consumer<NettyConnection> action ) throws Exception

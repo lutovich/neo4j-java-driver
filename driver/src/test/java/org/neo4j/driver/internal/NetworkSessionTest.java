@@ -366,7 +366,7 @@ public class NetworkSessionTest
         verify( connection ).runAndFlush( eq( query ), any(), any(), any() );
 
         tx.close();
-        verify( connection ).releaseInBackground();
+        verify( connection ).releaseNow();
     }
 
     @Test
@@ -582,11 +582,11 @@ public class NetworkSessionTest
         NetworkSession session = newSession( connectionProvider, READ );
         session.run( "RETURN 1" );
 
-        verify( connection, never() ).releaseInBackground();
+        verify( connection, never() ).releaseNow();
         verify( connection, never() ).releaseNow();
 
         session.reset();
-        verify( connection, never() ).releaseInBackground();
+        verify( connection, never() ).releaseNow();
         verify( connection ).releaseNow();
     }
 

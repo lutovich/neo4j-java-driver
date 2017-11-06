@@ -76,12 +76,6 @@ public class RoutingConnection implements Connection
     }
 
     @Override
-    public void releaseInBackground()
-    {
-        delegate.releaseInBackground();
-    }
-
-    @Override
     public boolean isInUse()
     {
         return delegate.isInUse();

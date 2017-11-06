@@ -21,10 +21,7 @@ package org.neo4j.driver.internal.async;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeoutException;
-
-import org.neo4j.driver.internal.util.Futures;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.junit.Assert.assertEquals;
@@ -32,6 +29,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.neo4j.driver.internal.util.Futures.failedFuture;
 import static org.neo4j.driver.internal.util.Futures.getBlocking;
 
 public class ResultCursorsHolderTest
@@ -80,10 +78,10 @@ public class ResultCursorsHolderTest
     {
         ResultCursorsHolder holder = new ResultCursorsHolder();
 
-        holder.add( Futures.failedFuture( new RuntimeException( "Failed to acquire a connection" ) ) );
+        holder.add( cursorFailedFuture( new RuntimeException( "Failed to acquire a connection" ) ) );
         holder.add( cursorWithoutError() );
         holder.add( cursorWithoutError() );
-        holder.add( Futures.failedFuture( new IOException( "Failed to do IO" ) ) );
+        holder.add( cursorFailedFuture( new IOException( "Failed to do IO" ) ) );
 
         Throwable error = getBlocking( holder.retrieveNotConsumedError() );
         assertNull( error );
@@ -120,15 +118,22 @@ public class ResultCursorsHolderTest
         assertEquals( error1, getBlocking( holder.retrieveNotConsumedError() ) );
     }
 
-    private CompletionStage<InternalStatementResultCursor> cursorWithoutError()
+    private InternalStatementResultCursor cursorWithoutError()
     {
         return cursorWithError( null );
     }
 
-    private CompletionStage<InternalStatementResultCursor> cursorWithError( Throwable error )
+    private InternalStatementResultCursor cursorWithError( Throwable error )
     {
         InternalStatementResultCursor cursor = mock( InternalStatementResultCursor.class );
         when( cursor.failureAsync() ).thenReturn( completedFuture( error ) );
-        return completedFuture( cursor );
+        return cursor;
+    }
+
+    private InternalStatementResultCursor cursorFailedFuture( Throwable error )
+    {
+        InternalStatementResultCursor cursor = mock( InternalStatementResultCursor.class );
+        when( cursor.failureAsync() ).thenReturn( failedFuture( error ) );
+        return cursor;
     }
 }

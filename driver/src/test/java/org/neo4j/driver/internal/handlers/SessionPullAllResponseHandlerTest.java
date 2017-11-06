@@ -20,13 +20,12 @@ package org.neo4j.driver.internal.handlers;
 
 import org.junit.Test;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.internal.util.ServerVersion;
 import org.neo4j.driver.v1.Statement;
 
 import static java.util.Collections.emptyMap;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,7 +40,7 @@ public class SessionPullAllResponseHandlerTest
 
         handler.onSuccess( emptyMap() );
 
-        verify( connection ).releaseInBackground();
+        verify( connection ).releaseNow();
     }
 
     @Test
@@ -52,13 +51,13 @@ public class SessionPullAllResponseHandlerTest
 
         handler.onFailure( new RuntimeException() );
 
-        verify( connection ).releaseInBackground();
+        verify( connection ).releaseNow();
     }
 
     private SessionPullAllResponseHandler newHandler( Connection connection )
     {
-        return new SessionPullAllResponseHandler( new Statement( "RETURN 1" ),
-                new RunResponseHandler( new CompletableFuture<>() ), connection );
+        return new SessionPullAllResponseHandler( new Statement( "RETURN 1" ), new RunResponseHandler(),
+                completedFuture( connection ) );
     }
 
     private static Connection newConnectionMock()

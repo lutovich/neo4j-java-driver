@@ -45,6 +45,7 @@ import org.neo4j.driver.v1.util.Pair;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.Assert.assertFalse;
@@ -393,14 +394,16 @@ public class InternalStatementResultTest
 
     private StatementResult createResult( int numberOfRecords )
     {
-        RunResponseHandler runHandler = new RunResponseHandler( new CompletableFuture<>() );
+        RunResponseHandler runHandler = new RunResponseHandler();
         runHandler.onSuccess( singletonMap( "fields", value( Arrays.asList( "k1", "k2" ) ) ) );
 
         Statement statement = new Statement( "<unknown>" );
         Connection connection = mock( Connection.class );
         when( connection.serverAddress() ).thenReturn( LOCAL_DEFAULT );
         when( connection.serverVersion() ).thenReturn( ServerVersion.v3_2_0 );
-        PullAllResponseHandler pullAllHandler = new SessionPullAllResponseHandler( statement, runHandler, connection );
+        CompletableFuture<Connection> connectionStage = completedFuture( connection );
+        PullAllResponseHandler pullAllHandler = new SessionPullAllResponseHandler( statement, runHandler,
+                connectionStage );
 
         for ( int i = 1; i <= numberOfRecords; i++ )
         {
@@ -408,7 +411,8 @@ public class InternalStatementResultTest
         }
         pullAllHandler.onSuccess( emptyMap() );
 
-        StatementResultCursor cursor = InternalStatementResultCursor.forBlockingRun( runHandler, pullAllHandler );
+        StatementResultCursor cursor = InternalStatementResultCursor.forBlockingRun( runHandler, pullAllHandler,
+                connectionStage );
         return new InternalStatementResult( cursor );
     }
 

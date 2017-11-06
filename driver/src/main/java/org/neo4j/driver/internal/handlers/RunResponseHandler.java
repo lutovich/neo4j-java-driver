@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.neo4j.driver.internal.spi.ResponseHandler;
 import org.neo4j.driver.v1.Value;
@@ -30,29 +31,21 @@ import static java.util.Collections.emptyList;
 
 public class RunResponseHandler implements ResponseHandler
 {
-    private final CompletableFuture<Void> runCompletedFuture;
-
-    private List<String> statementKeys = emptyList();
-    private long resultAvailableAfter;
-
-    public RunResponseHandler( CompletableFuture<Void> runCompletedFuture )
-    {
-        this.runCompletedFuture = runCompletedFuture;
-    }
+    private final CompletableFuture<List<String>> statementKeysFuture = new CompletableFuture<>();
+    private final CompletableFuture<Long> resultAvailableAfterFuture = new CompletableFuture<>();
 
     @Override
     public void onSuccess( Map<String,Value> metadata )
     {
-        statementKeys = extractKeys( metadata );
-        resultAvailableAfter = extractResultAvailableAfter( metadata );
-
-        completeRunFuture();
+        statementKeysFuture.complete( extractKeys( metadata ) );
+        resultAvailableAfterFuture.complete( extractResultAvailableAfter( metadata ) );
     }
 
     @Override
     public void onFailure( Throwable error )
     {
-        completeRunFuture();
+        statementKeysFuture.complete( emptyList() );
+        resultAvailableAfterFuture.complete( 0L );
     }
 
     @Override
@@ -61,24 +54,14 @@ public class RunResponseHandler implements ResponseHandler
         throw new UnsupportedOperationException();
     }
 
-    public List<String> statementKeys()
+    public CompletionStage<List<String>> statementKeysStage()
     {
-        return statementKeys;
+        return statementKeysFuture;
     }
 
-    public long resultAvailableAfter()
+    public CompletionStage<Long> resultAvailableAfterStage()
     {
-        return resultAvailableAfter;
-    }
-
-    /**
-     * Complete the given future with {@code null}. Future is never completed exceptionally because callers are only
-     * interested in when RUN completes and not how. Async API needs to wait for RUN because it needs to access
-     * statement keys.
-     */
-    private void completeRunFuture()
-    {
-        runCompletedFuture.complete( null );
+        return resultAvailableAfterFuture;
     }
 
     private static List<String> extractKeys( Map<String,Value> metadata )

@@ -46,7 +46,7 @@ public class InternalStatementResult implements StatementResult
         if ( keys == null )
         {
             getBlocking( cursor.peekAsync() );
-            keys = cursor.keys();
+            keys = getBlocking( cursor.keysAsync() );
         }
         return keys;
     }

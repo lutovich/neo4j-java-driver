@@ -25,6 +25,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.neo4j.driver.internal.handlers.PullAllResponseHandler;
 import org.neo4j.driver.internal.handlers.RunResponseHandler;
+import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.internal.util.Futures;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.StatementResultCursor;
@@ -44,49 +45,51 @@ public class InternalStatementResultCursor implements StatementResultCursor
     private final String name;
     private final RunResponseHandler runResponseHandler;
     private final PullAllResponseHandler pullAllHandler;
+    private final CompletionStage<Connection> connectionStage;
 
     private InternalStatementResultCursor( String name, RunResponseHandler runResponseHandler,
-            PullAllResponseHandler pullAllHandler )
+            PullAllResponseHandler pullAllHandler, CompletionStage<Connection> connectionStage )
     {
         this.name = name;
         this.runResponseHandler = runResponseHandler;
         this.pullAllHandler = pullAllHandler;
+        this.connectionStage = connectionStage;
     }
 
     public static InternalStatementResultCursor forBlockingRun( RunResponseHandler runResponseHandler,
-            PullAllResponseHandler pullAllHandler )
+            PullAllResponseHandler pullAllHandler, CompletionStage<Connection> connectionStage )
     {
-        return new InternalStatementResultCursor( BLOCKING_NAME, runResponseHandler, pullAllHandler );
+        return new InternalStatementResultCursor( BLOCKING_NAME, runResponseHandler, pullAllHandler, connectionStage );
     }
 
     public static InternalStatementResultCursor forAsyncRun( RunResponseHandler runResponseHandler,
-            PullAllResponseHandler pullAllHandler )
+            PullAllResponseHandler pullAllHandler, CompletionStage<Connection> connectionStage )
     {
-        return new InternalStatementResultCursor( ASYNC_NAME, runResponseHandler, pullAllHandler );
+        return new InternalStatementResultCursor( ASYNC_NAME, runResponseHandler, pullAllHandler, connectionStage );
     }
 
     @Override
-    public List<String> keys()
+    public CompletionStage<List<String>> keysAsync()
     {
-        return runResponseHandler.statementKeys();
+        return connectionStage.thenCompose( ignore -> runResponseHandler.statementKeysStage() );
     }
 
     @Override
     public CompletionStage<ResultSummary> summaryAsync()
     {
-        return pullAllHandler.summaryAsync();
+        return connectionStage.thenCompose( ignore -> pullAllHandler.summaryAsync() );
     }
 
     @Override
     public CompletionStage<Record> nextAsync()
     {
-        return pullAllHandler.nextAsync();
+        return connectionStage.thenCompose( ignore -> pullAllHandler.nextAsync() );
     }
 
     @Override
     public CompletionStage<Record> peekAsync()
     {
-        return pullAllHandler.peekAsync();
+        return connectionStage.thenCompose( ignore -> pullAllHandler.peekAsync() );
     }
 
     @Override
@@ -145,7 +148,7 @@ public class InternalStatementResultCursor implements StatementResultCursor
 
     public CompletionStage<Throwable> failureAsync()
     {
-        return pullAllHandler.failureAsync();
+        return connectionStage.thenCompose( ignore -> pullAllHandler.failureAsync() );
     }
 
     private void internalForEachAsync( Consumer<Record> action, CompletableFuture<Void> resultFuture )
