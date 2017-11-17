@@ -19,7 +19,6 @@
 package org.neo4j.driver.v1;
 
 import java.util.Map;
-import java.util.concurrent.CompletionStage;
 
 import org.neo4j.driver.v1.types.TypeSystem;
 import org.neo4j.driver.v1.util.Experimental;
@@ -94,7 +93,7 @@ public interface StatementRunner
      */
     StatementResult run( String statementTemplate, Value parameters );
 
-    CompletionStage<StatementResultCursor> runAsync( String statementText, Value parameters );
+    StatementResultCursor runAsync( String statementText, Value parameters );
 
     /**
      * Run a statement and return a result stream.
@@ -125,7 +124,7 @@ public interface StatementRunner
      */
     StatementResult run( String statementTemplate, Map<String,Object> statementParameters );
 
-    CompletionStage<StatementResultCursor> runAsync( String statementTemplate, Map<String,Object> statementParameters );
+    StatementResultCursor runAsync( String statementTemplate, Map<String,Object> statementParameters );
 
     /**
      * Run a statement and return a result stream.
@@ -144,7 +143,7 @@ public interface StatementRunner
      */
     StatementResult run( String statementTemplate, Record statementParameters );
 
-    CompletionStage<StatementResultCursor> runAsync( String statementTemplate, Record statementParameters );
+    StatementResultCursor runAsync( String statementTemplate, Record statementParameters );
 
     /**
      * Run a statement and return a result stream.
@@ -154,7 +153,7 @@ public interface StatementRunner
      */
     StatementResult run( String statementTemplate );
 
-    CompletionStage<StatementResultCursor> runAsync( String statementTemplate );
+    StatementResultCursor runAsync( String statementTemplate );
 
     /**
      * Run a statement and return a result stream.
@@ -171,7 +170,7 @@ public interface StatementRunner
      */
     StatementResult run( Statement statement );
 
-    CompletionStage<StatementResultCursor> runAsync( Statement statement );
+    StatementResultCursor runAsync( Statement statement );
 
     /**
      * @return type system used by this statement runner for classifying values

@@ -504,10 +504,13 @@ public class CausalClusteringIT
         {
             Session session = driver.session( AccessMode.READ );
 
-            CompletionStage<List<RecordAndSummary>> resultsStage = session.runAsync( "RETURN 42" )
-                    .thenCompose( cursor1 ->
-                            session.writeTransactionAsync( tx -> tx.runAsync( "CREATE (:Node1) RETURN 42" ) )
-                                    .thenCompose( cursor2 -> combineCursors( cursor2, cursor1 ) ) );
+            CompletionStage<RecordAndSummary> recordAndSummaryStage1 =
+                    buildRecordAndSummary( session.runAsync( "RETURN 42" ) );
+            CompletionStage<RecordAndSummary> recordAndSummaryStage2 = session.writeTransactionAsync(
+                    tx -> buildRecordAndSummary( tx.runAsync( "CREATE (:Node1) RETURN 42" ) ) );
+            CompletionStage<List<RecordAndSummary>> resultsStage = recordAndSummaryStage1
+                    .thenCombine( recordAndSummaryStage2, ( recordAndSummary1, recordAndSummary2 ) -> Arrays
+                            .asList( recordAndSummary1, recordAndSummary2 ) );
 
             List<RecordAndSummary> results = getBlocking( resultsStage );
             assertEquals( 2, results.size() );
@@ -522,8 +525,7 @@ public class CausalClusteringIT
             assertNotEquals( first.summary.server().address(), second.summary.server().address() );
 
             CompletionStage<Integer> countStage =
-                    session.readTransaction( tx -> tx.runAsync( "MATCH (n:Node1) RETURN count(n)" )
-                            .thenCompose( StatementResultCursor::singleAsync ) )
+                    session.readTransaction( tx -> tx.runAsync( "MATCH (n:Node1) RETURN count(n)" ).singleAsync() )
                             .thenApply( record -> record.get( 0 ).asInt() );
 
             assertEquals( 1, getBlocking( countStage ).intValue() );

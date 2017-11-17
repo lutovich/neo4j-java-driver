@@ -20,13 +20,12 @@ package org.neo4j.driver.internal.handlers;
 
 import org.junit.Test;
 
-import java.util.concurrent.CompletableFuture;
-
 import org.neo4j.driver.internal.ExplicitTransaction;
 import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.internal.util.ServerVersion;
 import org.neo4j.driver.v1.Statement;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,7 +39,7 @@ public class TransactionPullAllResponseHandlerTest
         when( connection.serverVersion() ).thenReturn( ServerVersion.v3_2_0 );
         ExplicitTransaction tx = mock( ExplicitTransaction.class );
         TransactionPullAllResponseHandler handler = new TransactionPullAllResponseHandler( new Statement( "RETURN 1" ),
-                new RunResponseHandler( new CompletableFuture<>() ), connection, tx );
+                new RunResponseHandler(), completedFuture( connection ), tx );
 
         handler.onFailure( new RuntimeException() );
 

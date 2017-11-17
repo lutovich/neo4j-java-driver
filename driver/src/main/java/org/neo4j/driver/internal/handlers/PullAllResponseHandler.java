@@ -45,7 +45,6 @@ import org.neo4j.driver.v1.summary.ResultSummary;
 import org.neo4j.driver.v1.summary.StatementType;
 
 import static java.util.Collections.emptyMap;
-import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.neo4j.driver.internal.util.Futures.failedFuture;
 
@@ -56,7 +55,7 @@ public abstract class PullAllResponseHandler implements ResponseHandler
 
     private final Statement statement;
     private final RunResponseHandler runResponseHandler;
-    protected final Connection connection;
+    protected final CompletionStage<Connection> connectionStage;
 
     private final Queue<Record> records = new LinkedList<>();
 
@@ -68,18 +67,19 @@ public abstract class PullAllResponseHandler implements ResponseHandler
     private CompletableFuture<ResultSummary> summaryFuture;
     private CompletableFuture<Throwable> failureFuture;
 
-    public PullAllResponseHandler( Statement statement, RunResponseHandler runResponseHandler, Connection connection )
+    public PullAllResponseHandler( Statement statement, RunResponseHandler runResponseHandler,
+            CompletionStage<Connection> connectionStage )
     {
-        this.statement = requireNonNull( statement );
-        this.runResponseHandler = requireNonNull( runResponseHandler );
-        this.connection = requireNonNull( connection );
+        this.statement = statement;
+        this.runResponseHandler = runResponseHandler;
+        this.connectionStage = connectionStage;
     }
 
     @Override
     public synchronized void onSuccess( Map<String,Value> metadata )
     {
         finished = true;
-        summary = extractResultSummary( metadata );
+        summary = extractResultSummary( metadata, extractConnection() );
 
         afterSuccess();
 
@@ -94,7 +94,7 @@ public abstract class PullAllResponseHandler implements ResponseHandler
     public synchronized void onFailure( Throwable error )
     {
         finished = true;
-        summary = extractResultSummary( emptyMap() );
+        summary = extractResultSummary( emptyMap(), extractConnection() );
 
         afterFailure( error );
 
@@ -214,7 +214,7 @@ public abstract class PullAllResponseHandler implements ResponseHandler
         {
             if ( records.size() > 10_000 )
             {
-                connection.disableAutoRead();
+                connectionStage.thenAccept( Connection::disableAutoRead );
             }
         }
     }
@@ -226,7 +226,7 @@ public abstract class PullAllResponseHandler implements ResponseHandler
         {
             if ( record != null && records.size() < 100 )
             {
-                connection.enableAutoRead();
+                connectionStage.thenAccept( Connection::enableAutoRead );
             }
         }
         return record;
@@ -300,10 +300,32 @@ public abstract class PullAllResponseHandler implements ResponseHandler
         return false;
     }
 
-    private ResultSummary extractResultSummary( Map<String,Value> metadata )
+    private Connection extractConnection()
     {
-        InternalServerInfo serverInfo = new InternalServerInfo( connection.serverAddress(),
-                connection.serverVersion() );
+        CompletableFuture<Connection> connectionFuture = connectionStage.toCompletableFuture();
+        if ( !connectionFuture.isDone() )
+        {
+            throw new IllegalStateException( "Connection not yet acquired" );
+        }
+        if ( connectionFuture.isCompletedExceptionally() )
+        {
+            return null;
+        }
+        return connectionFuture.getNow( null );
+    }
+
+    private ResultSummary extractResultSummary( Map<String,Value> metadata, Connection connection )
+    {
+        InternalServerInfo serverInfo;
+        if ( connection == null )
+        {
+            serverInfo = InternalServerInfo.EMPTY;
+        }
+        else
+        {
+            serverInfo = new InternalServerInfo( connection.serverAddress(), connection.serverVersion() );
+        }
+
         return new InternalResultSummary( statement, serverInfo, extractStatementType( metadata ),
                 extractCounters( metadata ), extractPlan( metadata ), extractProfiledPlan( metadata ),
                 extractNotifications( metadata ), runResponseHandler.resultAvailableAfter(),

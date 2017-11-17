@@ -18,6 +18,8 @@
  */
 package org.neo4j.driver.internal.handlers;
 
+import java.util.concurrent.CompletionStage;
+
 import org.neo4j.driver.internal.ExplicitTransaction;
 import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.v1.Statement;
@@ -29,9 +31,9 @@ public class TransactionPullAllResponseHandler extends PullAllResponseHandler
     private final ExplicitTransaction tx;
 
     public TransactionPullAllResponseHandler( Statement statement, RunResponseHandler runResponseHandler,
-            Connection connection, ExplicitTransaction tx )
+            CompletionStage<Connection> connectionStage, ExplicitTransaction tx )
     {
-        super( statement, runResponseHandler, connection );
+        super( statement, runResponseHandler, connectionStage );
         this.tx = requireNonNull( tx );
     }
 

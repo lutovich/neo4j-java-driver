@@ -44,10 +44,13 @@ public class AsyncReadQueryInTx<C extends AbstractContext> extends AbstractAsync
         Session session = newSession( AccessMode.READ, ctx );
 
         CompletionStage<Void> txCommitted = session.beginTransactionAsync()
-                .thenCompose( tx -> tx.runAsync( "MATCH (n) RETURN n LIMIT 1" )
-                        .thenCompose( cursor -> cursor.nextAsync()
-                                .thenCompose( record -> processRecordAndGetSummary( record, cursor )
-                                        .thenCompose( summary -> processSummaryAndCommit( summary, tx, ctx ) ) ) ) );
+                .thenCompose( tx ->
+                {
+                    StatementResultCursor cursor = tx.runAsync( "MATCH (n) RETURN n LIMIT 1" );
+                    return cursor.nextAsync()
+                            .thenCompose( record -> processRecordAndGetSummary( record, cursor ) )
+                            .thenCompose( summary -> processSummaryAndCommit( summary, tx, ctx ) );
+                } );
 
         txCommitted.whenComplete( ( ignore, error ) -> session.closeAsync() );
 

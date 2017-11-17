@@ -24,7 +24,6 @@ import org.neo4j.driver.internal.util.Futures;
 import org.neo4j.driver.v1.AccessMode;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.Session;
-import org.neo4j.driver.v1.StatementResultCursor;
 import org.neo4j.driver.v1.exceptions.ClientException;
 import org.neo4j.driver.v1.exceptions.Neo4jException;
 
@@ -47,7 +46,7 @@ public class AsyncWrongQuery<C extends AbstractContext> extends AbstractAsyncQue
         Session session = newSession( AccessMode.READ, context );
 
         return session.runAsync( "RETURN Wrong" )
-                .thenCompose( StatementResultCursor::nextAsync )
+                .nextAsync()
                 .handle( ( record, error ) ->
                 {
                     session.closeAsync();

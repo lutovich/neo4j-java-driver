@@ -49,7 +49,7 @@ public class AsyncWrongQueryInTx<C extends AbstractContext> extends AbstractAsyn
 
         return session.beginTransactionAsync()
                 .thenCompose( tx -> tx.runAsync( "RETURN Wrong" )
-                        .thenCompose( StatementResultCursor::nextAsync )
+                        .nextAsync()
                         .handle( ( record, error ) ->
                         {
                             assertNull( record );

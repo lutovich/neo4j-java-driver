@@ -27,12 +27,7 @@ import org.neo4j.driver.v1.util.Function;
 
 public interface StatementResultCursor
 {
-    /**
-     * Retrieve the keys of the records this result cursor contains.
-     *
-     * @return list of all keys.
-     */
-    List<String> keys();
+    CompletionStage<List<String>> keysAsync();
 
     CompletionStage<ResultSummary> summaryAsync();
 

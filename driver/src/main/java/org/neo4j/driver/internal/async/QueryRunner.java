@@ -28,10 +28,10 @@ import org.neo4j.driver.internal.handlers.RunResponseHandler;
 import org.neo4j.driver.internal.handlers.SessionPullAllResponseHandler;
 import org.neo4j.driver.internal.handlers.TransactionPullAllResponseHandler;
 import org.neo4j.driver.internal.spi.Connection;
+import org.neo4j.driver.internal.util.Futures;
 import org.neo4j.driver.v1.Statement;
 import org.neo4j.driver.v1.Value;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.neo4j.driver.v1.Values.ofValue;
 
 // todo: better method naming in this class and tests!
@@ -41,61 +41,75 @@ public final class QueryRunner
     {
     }
 
-    public static CompletionStage<InternalStatementResultCursor> runAsBlocking( Connection connection,
+    public static InternalStatementResultCursor runAsBlocking( CompletionStage<Connection> connectionStage,
             Statement statement )
     {
-        return runAsBlocking( connection, statement, null );
+        return runAsBlocking( connectionStage, statement, null );
     }
 
-    public static CompletionStage<InternalStatementResultCursor> runAsBlocking( Connection connection,
+    public static InternalStatementResultCursor runAsBlocking( CompletionStage<Connection> connectionStage,
             Statement statement, ExplicitTransaction tx )
     {
-        return runAsAsync( connection, statement, tx, false );
+        return run( connectionStage, statement, tx, false );
     }
 
-    public static CompletionStage<InternalStatementResultCursor> runAsAsync( Connection connection,
+    public static InternalStatementResultCursor runAsAsync( CompletionStage<Connection> connectionStage,
             Statement statement )
     {
-        return runAsAsync( connection, statement, null );
+        return runAsAsync( connectionStage, statement, null );
     }
 
-    public static CompletionStage<InternalStatementResultCursor> runAsAsync( Connection connection,
-            Statement statement, ExplicitTransaction tx )
+    public static InternalStatementResultCursor runAsAsync( CompletionStage<Connection> connection, Statement statement,
+            ExplicitTransaction tx )
     {
-        return runAsAsync( connection, statement, tx, true );
+        return run( connection, statement, tx, true );
     }
 
-    private static CompletionStage<InternalStatementResultCursor> runAsAsync( Connection connection,
-            Statement statement, ExplicitTransaction tx, boolean async )
+    private static InternalStatementResultCursor run( CompletionStage<Connection> connectionStage, Statement statement,
+            ExplicitTransaction tx, boolean async )
     {
         String query = statement.text();
         Map<String,Value> params = statement.parameters().asMap( ofValue() );
 
-        CompletableFuture<Void> runCompletedFuture = new CompletableFuture<>();
-        RunResponseHandler runHandler = new RunResponseHandler( runCompletedFuture );
-        PullAllResponseHandler pullAllHandler = newPullAllHandler( statement, runHandler, connection, tx );
+        CompletableFuture<Connection> connectionAfterRun = new CompletableFuture<>();
 
-        connection.runAndFlush( query, params, runHandler, pullAllHandler );
+        RunResponseHandler runHandler = new RunResponseHandler();
+        PullAllResponseHandler pullAllHandler = newPullAllHandler( statement, runHandler, connectionAfterRun, tx );
+
+        connectionStage.whenComplete( ( connection, error ) ->
+        {
+            if ( error != null )
+            {
+                Throwable cause = Futures.completionErrorCause( error );
+
+                connectionAfterRun.completeExceptionally( cause );
+                runHandler.onFailure( cause );
+                pullAllHandler.onFailure( cause );
+            }
+            else
+            {
+                connection.runAndFlush( query, params, runHandler, pullAllHandler );
+                connectionAfterRun.complete( connection );
+            }
+        } );
 
         if ( async )
         {
-            // wait for response of RUN before proceeding when execution is async
-            return runCompletedFuture.thenApply( ignore ->
-                    InternalStatementResultCursor.forAsyncRun( runHandler, pullAllHandler ) );
+            return InternalStatementResultCursor.forAsyncRun( runHandler, pullAllHandler );
         }
         else
         {
-            return completedFuture( InternalStatementResultCursor.forBlockingRun( runHandler, pullAllHandler ) );
+            return InternalStatementResultCursor.forBlockingRun( runHandler, pullAllHandler );
         }
     }
 
     private static PullAllResponseHandler newPullAllHandler( Statement statement, RunResponseHandler runHandler,
-            Connection connection, ExplicitTransaction tx )
+            CompletionStage<Connection> connectionStage, ExplicitTransaction tx )
     {
         if ( tx != null )
         {
-            return new TransactionPullAllResponseHandler( statement, runHandler, connection, tx );
+            return new TransactionPullAllResponseHandler( statement, runHandler, connectionStage, tx );
         }
-        return new SessionPullAllResponseHandler( statement, runHandler, connection );
+        return new SessionPullAllResponseHandler( statement, runHandler, connectionStage );
     }
 }

@@ -62,9 +62,10 @@ public class NetworkSession implements Session
     protected final Logger logger;
 
     private volatile Bookmark bookmark = Bookmark.empty();
+    private volatile InternalStatementResultCursor resultCursor;
+
     private volatile CompletionStage<ExplicitTransaction> transactionStage = completedFuture( null );
     private volatile CompletionStage<Connection> connectionStage = completedFuture( null );
-    private volatile CompletionStage<InternalStatementResultCursor> resultCursorStage = completedFuture( null );
 
     private final AtomicBoolean open = new AtomicBoolean( true );
 
@@ -84,7 +85,7 @@ public class NetworkSession implements Session
     }
 
     @Override
-    public CompletionStage<StatementResultCursor> runAsync( String statementText )
+    public StatementResultCursor runAsync( String statementText )
     {
         return runAsync( statementText, Values.EmptyMap );
     }
@@ -97,8 +98,7 @@ public class NetworkSession implements Session
     }
 
     @Override
-    public CompletionStage<StatementResultCursor> runAsync( String statementText,
-            Map<String,Object> statementParameters )
+    public StatementResultCursor runAsync( String statementText, Map<String,Object> statementParameters )
     {
         Value params = statementParameters == null ? Values.EmptyMap : value( statementParameters );
         return runAsync( statementText, params );
@@ -112,7 +112,7 @@ public class NetworkSession implements Session
     }
 
     @Override
-    public CompletionStage<StatementResultCursor> runAsync( String statementTemplate, Record statementParameters )
+    public StatementResultCursor runAsync( String statementTemplate, Record statementParameters )
     {
         Value params = statementParameters == null ? Values.EmptyMap : value( statementParameters.asMap() );
         return runAsync( statementTemplate, params );
@@ -125,7 +125,7 @@ public class NetworkSession implements Session
     }
 
     @Override
-    public CompletionStage<StatementResultCursor> runAsync( String statementText, Value parameters )
+    public StatementResultCursor runAsync( String statementText, Value parameters )
     {
         return runAsync( new Statement( statementText, parameters ) );
     }
@@ -133,15 +133,14 @@ public class NetworkSession implements Session
     @Override
     public StatementResult run( Statement statement )
     {
-        StatementResultCursor cursor = getBlocking( runAsync( statement, false ) );
+        StatementResultCursor cursor = runAsync( statement, false );
         return new InternalStatementResult( cursor );
     }
 
     @Override
-    public CompletionStage<StatementResultCursor> runAsync( Statement statement )
+    public StatementResultCursor runAsync( Statement statement )
     {
-        //noinspection unchecked
-        return (CompletionStage) runAsync( statement, true );
+        return runAsync( statement, true );
     }
 
     @Override
@@ -161,14 +160,8 @@ public class NetworkSession implements Session
     {
         if ( open.compareAndSet( true, false ) )
         {
-            return resultCursorStage.thenCompose( cursor ->
-            {
-                if ( cursor == null )
-                {
-                    return completedFuture( null );
-                }
-                return cursor.failureAsync();
-            } ).thenCompose( error -> releaseResources().thenApply( ignore ->
+            return waitForPreviousResultAndConsumeFailure()
+                    .thenCompose( error -> releaseResources().thenApply( ignore ->
             {
                 Throwable queryError = Futures.completionErrorCause( error );
                 if ( queryError != null )
@@ -411,27 +404,17 @@ public class NetworkSession implements Session
         }
     }
 
-    private CompletionStage<InternalStatementResultCursor> runAsync( Statement statement, boolean waitForRunResponse )
+    private InternalStatementResultCursor runAsync( Statement statement, boolean async )
     {
         ensureSessionIsOpen();
 
-        CompletionStage<InternalStatementResultCursor> newResultCursorStage = ensureNoOpenTxBeforeRunningQuery()
-                .thenCompose( ignore -> acquireConnection( mode ) )
-                .thenCompose( connection ->
-                {
-                    if ( waitForRunResponse )
-                    {
-                        return QueryRunner.runAsAsync( connection, statement );
-                    }
-                    else
-                    {
-                        return QueryRunner.runAsBlocking( connection, statement );
-                    }
-                } );
+        CompletionStage<Connection> connectionStage = ensureNoOpenTxBeforeRunningQuery()
+                .thenCompose( ignore -> acquireConnection( mode ) );
 
-        resultCursorStage = newResultCursorStage.exceptionally( error -> null );
+        resultCursor = async ? QueryRunner.runAsAsync( connectionStage, statement )
+                             : QueryRunner.runAsBlocking( connectionStage, statement );
 
-        return newResultCursorStage;
+        return resultCursor;
     }
 
     private CompletionStage<ExplicitTransaction> beginTransactionAsync( AccessMode mode )
@@ -453,15 +436,7 @@ public class NetworkSession implements Session
     {
         CompletionStage<Connection> currentConnectionStage = connectionStage;
 
-        CompletionStage<Connection> newConnectionStage = resultCursorStage.thenCompose( cursor ->
-        {
-            if ( cursor == null )
-            {
-                return completedFuture( null );
-            }
-            // make sure previous result is fully consumed and connection is released back to the pool
-            return cursor.failureAsync();
-        } ).thenCompose( error ->
+        CompletionStage<Connection> newConnectionStage = waitForPreviousResultAndConsumeFailure().thenCompose( error ->
         {
             if ( error == null )
             {
@@ -471,7 +446,7 @@ public class NetworkSession implements Session
                 //   3) previous result failed and error has been consumed
 
                 // return existing connection, which should've been released back to the pool by now
-                return currentConnectionStage.exceptionally( ignore -> null );
+                return currentConnectionStage;
             }
             else
             {
@@ -560,6 +535,13 @@ public class NetworkSession implements Session
     private CompletionStage<Connection> existingConnectionOrNull()
     {
         return connectionStage.exceptionally( error -> null ); // handle previous acquisition failures
+    }
+
+    private CompletionStage<Throwable> waitForPreviousResultAndConsumeFailure()
+    {
+        // make sure previous result is fully consumed and connection is released back to the pool
+        return resultCursor == null ? completedFuture( null )
+                                    : resultCursor.failureAsync();
     }
 
     private void ensureSessionIsOpen()

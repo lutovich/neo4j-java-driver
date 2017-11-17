@@ -44,7 +44,7 @@ public class AsyncFailingQuery<C extends AbstractContext> extends AbstractAsyncQ
         Session session = newSession( AccessMode.READ, context );
 
         return session.runAsync( "UNWIND [10, 5, 0] AS x RETURN 10 / x" )
-                .thenCompose( StatementResultCursor::listAsync )
+                .listAsync()
                 .handle( ( records, error ) ->
                 {
                     session.closeAsync();

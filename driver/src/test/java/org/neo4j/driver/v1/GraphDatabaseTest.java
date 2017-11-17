@@ -18,14 +18,17 @@
  */
 package org.neo4j.driver.v1;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 import org.neo4j.driver.v1.util.StubServer;
+import org.neo4j.driver.v1.util.TestNeo4j;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.is;

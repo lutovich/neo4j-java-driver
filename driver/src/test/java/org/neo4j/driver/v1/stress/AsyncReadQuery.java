@@ -42,9 +42,9 @@ public class AsyncReadQuery<C extends AbstractContext> extends AbstractAsyncQuer
     {
         Session session = newSession( AccessMode.READ, context );
 
-        CompletionStage<ResultSummary> queryFinished = session.runAsync( "MATCH (n) RETURN n LIMIT 1" )
-                .thenCompose( cursor -> cursor.nextAsync()
-                        .thenCompose( record -> processAndGetSummary( record, cursor ) ) );
+        StatementResultCursor cursor = session.runAsync( "MATCH (n) RETURN n LIMIT 1" );
+        CompletionStage<ResultSummary> queryFinished = cursor.nextAsync()
+                .thenCompose( record -> processAndGetSummary( record, cursor ) );
 
         queryFinished.whenComplete( ( summary, error ) ->
         {

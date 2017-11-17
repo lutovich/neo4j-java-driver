@@ -66,9 +66,9 @@ public class InternalStatementResultCursor implements StatementResultCursor
     }
 
     @Override
-    public List<String> keys()
+    public CompletionStage<List<String>> keysAsync()
     {
-        return runResponseHandler.statementKeys();
+        return runResponseHandler.statementKeysStage();
     }
 
     @Override

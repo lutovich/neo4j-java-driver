@@ -25,34 +25,31 @@ import org.neo4j.driver.v1.summary.ServerInfo;
 
 public class InternalServerInfo implements ServerInfo
 {
-    private final BoltServerAddress address;
+    public static final InternalServerInfo EMPTY = new InternalServerInfo( null, null );
+
+    private final String address;
     private final String version;
 
     public InternalServerInfo( BoltServerAddress address, ServerVersion version )
     {
-        this( address, version.toString() );
-    }
-
-    public InternalServerInfo( BoltServerAddress address, String version )
-    {
-        this.address = address;
-        this.version = version;
-    }
-
-    public BoltServerAddress boltServerAddress()
-    {
-        return this.address;
+        this.address = nullOrString( address );
+        this.version = nullOrString( version );
     }
 
     @Override
     public String address()
     {
-        return this.address.toString();
+        return address;
     }
 
     @Override
     public String version()
     {
         return version;
+    }
+
+    private static String nullOrString( Object value )
+    {
+        return value == null ? null : value.toString();
     }
 }

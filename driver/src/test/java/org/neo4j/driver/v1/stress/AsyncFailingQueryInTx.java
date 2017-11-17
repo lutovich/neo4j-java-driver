@@ -46,7 +46,7 @@ public class AsyncFailingQueryInTx<C extends AbstractContext> extends AbstractAs
 
         return session.beginTransactionAsync()
                 .thenCompose( tx -> tx.runAsync( "UNWIND [10, 5, 0] AS x RETURN 10 / x" )
-                        .thenCompose( StatementResultCursor::listAsync )
+                        .listAsync()
                         .handle( ( records, error ) ->
                         {
                             assertNull( records );

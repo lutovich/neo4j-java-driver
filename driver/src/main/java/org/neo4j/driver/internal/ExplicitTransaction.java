@@ -226,7 +226,7 @@ public class ExplicitTransaction implements Transaction
     }
 
     @Override
-    public CompletionStage<StatementResultCursor> runAsync( String statementText, Value parameters )
+    public StatementResultCursor runAsync( String statementText, Value parameters )
     {
         return runAsync( new Statement( statementText, parameters ) );
     }
@@ -238,7 +238,7 @@ public class ExplicitTransaction implements Transaction
     }
 
     @Override
-    public CompletionStage<StatementResultCursor> runAsync( String statementTemplate )
+    public StatementResultCursor runAsync( String statementTemplate )
     {
         return runAsync( statementTemplate, Values.EmptyMap );
     }
@@ -251,7 +251,7 @@ public class ExplicitTransaction implements Transaction
     }
 
     @Override
-    public CompletionStage<StatementResultCursor> runAsync( String statementTemplate,
+    public StatementResultCursor runAsync( String statementTemplate,
             Map<String,Object> statementParameters )
     {
         Value params = statementParameters == null ? Values.EmptyMap : value( statementParameters );
@@ -266,7 +266,7 @@ public class ExplicitTransaction implements Transaction
     }
 
     @Override
-    public CompletionStage<StatementResultCursor> runAsync( String statementTemplate, Record statementParameters )
+    public StatementResultCursor runAsync( String statementTemplate, Record statementParameters )
     {
         Value params = statementParameters == null ? Values.EmptyMap : value( statementParameters.asMap() );
         return runAsync( statementTemplate, params );
@@ -275,31 +275,31 @@ public class ExplicitTransaction implements Transaction
     @Override
     public StatementResult run( Statement statement )
     {
-        StatementResultCursor cursor = getBlocking( run( statement, false ) );
+        StatementResultCursor cursor = run( statement, false );
         return new InternalStatementResult( cursor );
     }
 
     @Override
-    public CompletionStage<StatementResultCursor> runAsync( Statement statement )
+    public StatementResultCursor runAsync( Statement statement )
     {
-        //noinspection unchecked
-        return (CompletionStage) run( statement, true );
+        return run( statement, true );
     }
 
-    private CompletionStage<InternalStatementResultCursor> run( Statement statement, boolean asAsync )
+    private InternalStatementResultCursor run( Statement statement, boolean asAsync )
     {
         ensureCanRunQueries();
-        CompletionStage<InternalStatementResultCursor> cursorStage;
+        InternalStatementResultCursor cursor;
         if ( asAsync )
         {
-            cursorStage = QueryRunner.runAsAsync( connection, statement, this );
+            // todo: extract completedFuture( connection ) to not call it every time
+            cursor = QueryRunner.runAsAsync( completedFuture( connection ), statement, this );
         }
         else
         {
-            cursorStage = QueryRunner.runAsBlocking( connection, statement, this );
+            cursor = QueryRunner.runAsBlocking( completedFuture( connection ), statement, this );
         }
-        resultCursors.add( cursorStage );
-        return cursorStage;
+        resultCursors.add( cursor );
+        return cursor;
     }
 
     private void ensureCanRunQueries()

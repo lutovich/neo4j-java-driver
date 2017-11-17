@@ -44,7 +44,7 @@ public class AsyncWriteQuery<C extends AbstractContext> extends AbstractAsyncQue
         Session session = newSession( AccessMode.WRITE, context );
 
         return session.runAsync( "CREATE ()" )
-                .thenCompose( StatementResultCursor::summaryAsync )
+                .summaryAsync()
                 .handle( ( summary, error ) ->
                 {
                     session.closeAsync();

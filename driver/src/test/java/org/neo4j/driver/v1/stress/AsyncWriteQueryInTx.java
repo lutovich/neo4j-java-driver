@@ -44,9 +44,8 @@ public class AsyncWriteQueryInTx<C extends AbstractContext> extends AbstractAsyn
         Session session = newSession( AccessMode.WRITE, context );
 
         CompletionStage<ResultSummary> txCommitted = session.beginTransactionAsync().thenCompose( tx ->
-                tx.runAsync( "CREATE ()" ).thenCompose( cursor ->
-                        cursor.summaryAsync().thenCompose( summary ->
-                                tx.commitAsync().thenApply( ignore -> summary ) ) ) );
+                tx.runAsync( "CREATE ()" ).summaryAsync().thenCompose( summary ->
+                        tx.commitAsync().thenApply( ignore -> summary ) ) );
 
         return txCommitted.handle( ( summary, error ) ->
         {
