@@ -9,6 +9,7 @@
     <bundle.name>${project.groupId}.${project.artifactId}</bundle.name>
     <maven.build.timestamp.format>'v'yyyyMMdd-HHmm</maven.build.timestamp.format>
     <netty.version>4.1.16.Final</netty.version>
+    <netty.tcnative.version>2.0.7.Final</netty.tcnative.version>
   </properties>
 
   <parent>
@@ -33,13 +34,24 @@
   </licenses>
 
   <dependencies>
-      <dependency>
-          <groupId>io.netty</groupId>
-          <artifactId>netty-handler</artifactId>
-          <version>${netty.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-handler</artifactId>
+      <version>${netty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-transport-native-epoll</artifactId>
+      <version>${netty.version}</version>
+      <classifier>linux-x86_64</classifier>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-tcnative-boringssl-static</artifactId>
+      <version>${netty.tcnative.version}</version>
+    </dependency>
 
-      <!-- Test dependencies -->
+    <!-- Test dependencies -->
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest-library</artifactId>
@@ -270,6 +282,42 @@
               </relocations>
               <shadeTestJar>true</shadeTestJar>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>unpack</id>
+            <phase>package</phase>
+            <configuration>
+              <target>
+                <echo message="unjar"/>
+                <unzip src="${project.build.directory}/${project.artifactId}-${project.version}.jar"
+                       dest="${project.build.directory}/exploded/"/>
+
+                <move file="${project.build.directory}/exploded/META-INF/native/libnetty_transport_native_epoll_x86_64.so"
+                      tofile="${project.build.directory}/exploded/META-INF/native/liborg_neo4j_driver_internal_shaded_netty_transport_native_epoll_x86_64.so"/>
+
+                <move file="${project.build.directory}/exploded/META-INF/native/libnetty_tcnative_linux_x86_64.so"
+                      tofile="${project.build.directory}/exploded/META-INF/native/liborg_neo4j_driver_internal_shaded_netty_tcnative_linux_x86_64.so"/>
+
+                <move file="${project.build.directory}/exploded/META-INF/native/libnetty_tcnative_osx_x86_64.jnilib"
+                      tofile="${project.build.directory}/exploded/META-INF/native/liborg_neo4j_driver_internal_shaded_netty_tcnative_osx_x86_64.jnilib"/>
+
+                <move file="${project.build.directory}/exploded/META-INF/native/netty_tcnative_windows_x86_64.dll"
+                      tofile="${project.build.directory}/exploded/META-INF/native/org_neo4j_driver_internal_shaded_netty_tcnative_windows_x86_64.dll"/>
+
+                <jar destfile="${project.build.directory}/${project.artifactId}-${project.version}.jar"
+                     basedir="${project.build.directory}/exploded"/>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

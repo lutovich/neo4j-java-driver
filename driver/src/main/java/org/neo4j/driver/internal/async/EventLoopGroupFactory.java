@@ -21,6 +21,10 @@ package org.neo4j.driver.internal.async;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultithreadEventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.DefaultThreadFactory;
@@ -28,7 +32,6 @@ import io.netty.util.concurrent.FastThreadLocalThread;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 
 import org.neo4j.driver.v1.Session;
 
@@ -37,8 +40,11 @@ import org.neo4j.driver.v1.Session;
  */
 public final class EventLoopGroupFactory
 {
+    private static final boolean DISABLE_EPOLL_TRANSPORT = Boolean.getBoolean( "disableEpollTransport" );
+
     private static final String THREAD_NAME_PREFIX = "Neo4jDriverIO";
     private static final int THREAD_PRIORITY = Thread.MAX_PRIORITY;
+    private static final int DEFAULT_THREAD_COUNT = 0;
 
     private EventLoopGroupFactory()
     {
@@ -52,7 +58,22 @@ public final class EventLoopGroupFactory
      */
     public static Class<? extends Channel> channelClass()
     {
+        if ( canUseEpollTransport() )
+        {
+            return EpollSocketChannel.class;
+        }
         return NioSocketChannel.class;
+    }
+
+    /**
+     * Create new {@link EventLoopGroup} with default thread count. Returned group should by given to
+     * {@link Bootstrap#group(EventLoopGroup)}.
+     *
+     * @return new group consistent with channel class returned by {@link #channelClass()}.
+     */
+    public static EventLoopGroup newEventLoopGroup()
+    {
+        return newEventLoopGroup( DEFAULT_THREAD_COUNT );
     }
 
     /**
@@ -64,18 +85,11 @@ public final class EventLoopGroupFactory
      */
     public static EventLoopGroup newEventLoopGroup( int threadCount )
     {
-        return new DriverEventLoopGroup( threadCount );
-    }
-
-    /**
-     * Create new {@link EventLoopGroup} with default thread count. Returned group should by given to
-     * {@link Bootstrap#group(EventLoopGroup)}.
-     *
-     * @return new group consistent with channel class returned by {@link #channelClass()}.
-     */
-    public static EventLoopGroup newEventLoopGroup()
-    {
-        return new DriverEventLoopGroup();
+        if ( canUseEpollTransport() )
+        {
+            return newEpollEventLoopGroup( threadCount );
+        }
+        return newNioEventLoopGroup( threadCount );
     }
 
     /**
@@ -107,31 +121,29 @@ public final class EventLoopGroupFactory
         return thread instanceof DriverThread;
     }
 
-    /**
-     * Same as {@link NioEventLoopGroup} but uses a different {@link ThreadFactory} that produces threads of
-     * {@link DriverThread} class. Such threads can be recognized by {@link #assertNotInEventLoopThread()}.
-     */
-    private static class DriverEventLoopGroup extends NioEventLoopGroup
+    private static NioEventLoopGroup newNioEventLoopGroup( int threadCount )
     {
-        DriverEventLoopGroup()
-        {
-        }
+        return new NioEventLoopGroup( threadCount, new DriverThreadFactory() );
+    }
 
-        DriverEventLoopGroup( int nThreads )
-        {
-            super( nThreads );
-        }
+    private static EpollEventLoopGroup newEpollEventLoopGroup( int threadCount )
+    {
+        return new EpollEventLoopGroup( threadCount, new DriverThreadFactory() );
+    }
 
-        @Override
-        protected ThreadFactory newDefaultThreadFactory()
-        {
-            return new DriverThreadFactory();
+    private static boolean canUseEpollTransport()
+    {
+        boolean result = Epoll.isAvailable() && !DISABLE_EPOLL_TRANSPORT;
+        System.out.println( "Epoll.isAvailable() = " + Epoll.isAvailable() );
+        if(!Epoll.isAvailable()) {
+            Epoll.unavailabilityCause().printStackTrace(System.out);
         }
+        return result;
     }
 
     /**
-     * Same as {@link DefaultThreadFactory} created by {@link NioEventLoopGroup} by default, except produces threads of
-     * {@link DriverThread} class. Such threads can be recognized by {@link #assertNotInEventLoopThread()}.
+     * Same as {@link DefaultThreadFactory} created by {@link MultithreadEventLoopGroup} by default, except produces
+     * threads of {@link DriverThread} class. Such threads can be recognized by {@link #assertNotInEventLoopThread()}.
      */
     private static class DriverThreadFactory extends DefaultThreadFactory
     {

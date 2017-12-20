@@ -23,6 +23,8 @@ import io.netty.handler.ssl.SslHandler;
 import org.junit.After;
 import org.junit.Test;
 
+import javax.net.ssl.SSLException;
+
 import org.neo4j.driver.internal.security.SecurityPlan;
 import org.neo4j.driver.internal.util.Clock;
 import org.neo4j.driver.internal.util.FakeClock;
@@ -60,7 +62,7 @@ public class NettyChannelInitializerTest
     }
 
     @Test
-    public void shouldNotAddSslHandlerWhenDoesNotRequireEncryption()
+    public void shouldNotAddSslHandlerWhenDoesNotRequireEncryption() throws SSLException
     {
         SecurityPlan security = SecurityPlan.insecure();
         NettyChannelInitializer initializer = newInitializer( security );
@@ -85,7 +87,7 @@ public class NettyChannelInitializerTest
     }
 
     @Test
-    public void shouldUpdateChannelAttributes()
+    public void shouldUpdateChannelAttributes() throws SSLException
     {
         Clock clock = mock( Clock.class );
         when( clock.millis() ).thenReturn( 42L );

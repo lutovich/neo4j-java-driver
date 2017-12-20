@@ -18,12 +18,18 @@
  */
 package org.neo4j.driver.internal.async;
 
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
+import io.netty.handler.ssl.OpenSsl;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.SslProvider;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
 
 import org.neo4j.driver.internal.BoltServerAddress;
 import org.neo4j.driver.internal.async.inbound.InboundMessageDispatcher;
@@ -54,21 +60,40 @@ public class NettyChannelInitializer extends ChannelInitializer<Channel>
     }
 
     @Override
-    protected void initChannel( Channel channel )
+    protected void initChannel( Channel channel ) throws SSLException
     {
         if ( securityPlan.requiresEncryption() )
         {
-            SslHandler sslHandler = createSslHandler();
+            SslHandler sslHandler = createSslHandler(channel.alloc());
             channel.pipeline().addFirst( sslHandler );
         }
 
         updateChannelAttributes( channel );
     }
 
-    private SslHandler createSslHandler()
+    private SslHandler createSslHandler(ByteBufAllocator allocator) throws SSLException
     {
-        SSLEngine sslEngine = createSslEngine();
-        SslHandler sslHandler = new SslHandler( sslEngine );
+        System.out.println("creating ssl handler");
+        SslHandler sslHandler = null;
+        try
+        {
+            sslHandler = SslContextBuilder.forClient()
+                    .trustManager( InsecureTrustManagerFactory.INSTANCE )
+                    .sslProvider( SslProvider.OPENSSL )
+                    .build()
+                    .newHandler( allocator );
+
+            System.out.println( "OpenSsl.isAvailable() = " + OpenSsl.isAvailable() );
+        }
+        catch ( Throwable t )
+        {
+            t.printStackTrace(System.out);
+            throw t;
+        }
+        System.out.println("created ssl handler");
+
+//        SSLEngine sslEngine = createSslEngine();
+//        SslHandler sslHandler = new SslHandler( sslEngine );
         sslHandler.setHandshakeTimeoutMillis( connectTimeoutMillis );
         return sslHandler;
     }
