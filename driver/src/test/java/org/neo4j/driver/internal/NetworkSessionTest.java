@@ -932,7 +932,7 @@ public class NetworkSessionTest
             @Override
             public Void answer( InvocationOnMock invocation )
             {
-                ResponseHandler handler = invocation.getArgumentAt( 3, ResponseHandler.class );
+                ResponseHandler handler = invocation.getArgument( 3 );
                 if ( invoked++ < times )
                 {
                     handler.onFailure( new ServiceUnavailableException( "" ) );
@@ -950,7 +950,7 @@ public class NetworkSessionTest
     {
         doAnswer( (Answer<Void>) invocation ->
         {
-            ResponseHandler handler = invocation.getArgumentAt( 3, ResponseHandler.class );
+            ResponseHandler handler = invocation.getArgument( 3 );
             handler.onFailure( error );
             return null;
         } ).when( connection ).runAndFlush( eq( "BEGIN" ), any(), any(), any() );
@@ -960,7 +960,7 @@ public class NetworkSessionTest
     {
         doAnswer( invocation ->
         {
-            ResponseHandler pullAllHandler = invocation.getArgumentAt( 3, ResponseHandler.class );
+            ResponseHandler pullAllHandler = invocation.getArgument( 3 );
             pullAllHandler.onSuccess( emptyMap() );
             return null;
         } ).when( connection ).runAndFlush( eq( query ), eq( emptyMap() ), any(), any() );

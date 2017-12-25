@@ -387,7 +387,7 @@ public class RediscoveryTest
         ClusterCompositionProvider provider = mock( ClusterCompositionProvider.class );
         when( provider.getClusterComposition( any( CompletionStage.class ) ) ).then( invocation ->
         {
-            CompletionStage<Connection> connectionStage = invocation.getArgumentAt( 0, CompletionStage.class );
+            CompletionStage<Connection> connectionStage = invocation.getArgument( 0 );
             BoltServerAddress address = await( connectionStage ).serverAddress();
             Object response = responsesByAddress.get( address );
             assertNotNull( response );
@@ -415,7 +415,7 @@ public class RediscoveryTest
         ConnectionPool pool = mock( ConnectionPool.class );
         when( pool.acquire( any() ) ).then( invocation ->
         {
-            BoltServerAddress address = invocation.getArgumentAt( 0, BoltServerAddress.class );
+            BoltServerAddress address = invocation.getArgument( 0 );
             return completedFuture( asyncConnectionMock( address ) );
         } );
         return pool;

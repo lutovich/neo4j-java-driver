@@ -279,7 +279,7 @@ public class ExplicitTransactionTest
 
         doAnswer( invocation ->
         {
-            ResponseHandler beginHandler = invocation.getArgumentAt( 3, ResponseHandler.class );
+            ResponseHandler beginHandler = invocation.getArgument( 3 );
             beginBehaviour.accept( beginHandler );
             return null;
         } ).when( connection ).runAndFlush( eq( "BEGIN" ), any(), any(), any() );

@@ -133,7 +133,7 @@ public class OutboundMessageHandlerTest
 
         when( messageFormat.newWriter( any( PackOutput.class ), anyBoolean() ) ).then( invocation ->
         {
-            PackOutput output = invocation.getArgumentAt( 0, PackOutput.class );
+            PackOutput output = invocation.getArgument( 0 );
             return mockWriter( output, bytesToWrite );
         } );
 

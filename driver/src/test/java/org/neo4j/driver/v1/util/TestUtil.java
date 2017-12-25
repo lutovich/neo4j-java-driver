@@ -204,7 +204,7 @@ public final class TestUtil
     {
         doAnswer( invocation ->
         {
-            ResponseHandler commitHandler = invocation.getArgumentAt( 3, ResponseHandler.class );
+            ResponseHandler commitHandler = invocation.getArgument( 3 );
             commitHandler.onSuccess( emptyMap() );
             return null;
         } ).when( connection ).runAndFlush( eq( statement ), any(), any(), any() );

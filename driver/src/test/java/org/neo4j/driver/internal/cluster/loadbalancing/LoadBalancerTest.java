@@ -361,7 +361,7 @@ public class LoadBalancerTest
         ConnectionPool pool = mock( ConnectionPool.class );
         when( pool.acquire( any( BoltServerAddress.class ) ) ).then( invocation ->
         {
-            BoltServerAddress requestedAddress = invocation.getArgumentAt( 0, BoltServerAddress.class );
+            BoltServerAddress requestedAddress = invocation.getArgument( 0 );
             if ( unavailableAddresses.contains( requestedAddress ) )
             {
                 return Futures.failedFuture( new ServiceUnavailableException( requestedAddress + " is unavailable!" ) );

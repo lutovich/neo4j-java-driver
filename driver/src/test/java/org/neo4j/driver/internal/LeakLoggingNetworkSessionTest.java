@@ -76,7 +76,7 @@ public class LeakLoggingNetworkSessionTest
         finalize( session );
 
         ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass( String.class );
-        verify( log ).error( messageCaptor.capture(), any( Throwable.class ) );
+        verify( log ).error( messageCaptor.capture(), any() );
 
         assertEquals( 1, messageCaptor.getAllValues().size() );
 
