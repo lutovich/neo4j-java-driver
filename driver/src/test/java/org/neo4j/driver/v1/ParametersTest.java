@@ -18,26 +18,21 @@
  */
 package org.neo4j.driver.v1;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import org.neo4j.driver.v1.exceptions.ClientException;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 public class ParametersTest
 {
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-
     @Test
-    public void shouldGiveHelpfulMessageOnMisalignedInput() throws Throwable
+    public void shouldGiveHelpfulMessageOnMisalignedInput()
     {
-        // Expect
-        exception.expect( ClientException.class );
-        exception.expectMessage( "Parameters function requires an even number of arguments, " +
-                                 "alternating key and value." );
-
-        // When
-        Values.parameters( "1", new Object(), "2" );
+        ClientException ex = assertThrows( ClientException.class, () -> Values.parameters( "1", new Object(), "2" ) );
+        assertThat( ex.getMessage(), containsString(
+                "Parameters function requires an even number of arguments, alternating key and value." ) );
     }
 }

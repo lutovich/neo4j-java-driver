@@ -18,9 +18,9 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -34,26 +34,30 @@ import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.exceptions.ClientException;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
-import org.neo4j.driver.v1.util.TestNeo4jSession;
+import org.neo4j.driver.v1.util.Neo4jSessionExtension;
 import org.neo4j.driver.v1.util.TestUtil;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@ExtendWith( Neo4jSessionExtension.class )
 public class TransactionIT
 {
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-    @Rule
-    public TestNeo4jSession session = new TestNeo4jSession();
-
+    private Neo4jSessionExtension session;
     private Transaction globalTx;
+
+    @BeforeEach
+    public void beforeEach( Neo4jSessionExtension sessionExtension )
+    {
+        session = sessionExtension;
+    }
 
     @Test
     public void shouldRunAndCommit() throws Throwable
@@ -107,14 +111,9 @@ public class TransactionIT
     @Test
     public void shouldNotAllowSessionLevelStatementsWhenThereIsATransaction() throws Throwable
     {
-        // Given
         session.beginTransaction();
 
-        // Expect
-        exception.expect( ClientException.class );
-
-        // When
-        session.run( "anything" );
+        assertThrows( ClientException.class, () -> session.run( "anything" ) );
     }
 
     @Test
@@ -172,11 +171,8 @@ public class TransactionIT
         tx.success();
         tx.close();
 
-        // EXPECT
-        exception.expect( ClientException.class );
-
-        //WHEN running a malformed query in the original session
-        session.run( "CREAT (n) RETURN n" ).consume();
+        // THEN running a malformed query in the original session
+        assertThrows( ClientException.class, () -> session.run( "CREAT (n) RETURN n" ).consume() );
     }
 
     @SuppressWarnings( "ConstantConditions" )
@@ -247,13 +243,16 @@ public class TransactionIT
     @Test
     public void shouldHandleResetBeforeRun() throws Throwable
     {
-        // Expect
-        exception.expect( ClientException.class );
-        exception.expectMessage( "Cannot run more statements in this transaction, it has been terminated by" );
-        // When
-        Transaction tx = session.beginTransaction();
-        session.reset();
-        tx.run( "CREATE (n:FirstNode)" );
+        ClientException ex = assertThrows( ClientException.class,
+                () ->
+                {
+                    Transaction tx = session.beginTransaction();
+                    session.reset();
+                    tx.run( "CREATE (n:FirstNode)" );
+                } );
+
+        assertThat( ex.getMessage(),
+                containsString( "Cannot run more statements in this transaction, it has been terminated by" ) );
     }
 
     @SuppressWarnings( "deprecation" )
@@ -269,7 +268,7 @@ public class TransactionIT
             public void run()
             {
                 globalTx = session.beginTransaction();
-                    globalTx.run( "CREATE (n:FirstNode)" );
+                globalTx.run( "CREATE (n:FirstNode)" );
                 try
                 {
                     Thread.sleep( 1000 );
@@ -333,7 +332,6 @@ public class TransactionIT
             {
                 StatementResult cursor = anotherTx.run( "RETURN 1" );
                 int val = cursor.single().get( "1" ).asInt();
-
 
                 assertThat( val, equalTo( 1 ) );
             }

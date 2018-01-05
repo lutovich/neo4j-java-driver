@@ -18,13 +18,13 @@
  */
 package org.neo4j.driver.v1;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.neo4j.driver.v1.Values.parameters;
 
 public class StatementTest

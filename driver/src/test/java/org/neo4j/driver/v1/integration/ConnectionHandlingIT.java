@@ -19,10 +19,10 @@
 package org.neo4j.driver.v1.integration;
 
 import io.netty.bootstrap.Bootstrap;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 
 import java.util.List;
@@ -52,14 +52,14 @@ import org.neo4j.driver.v1.StatementRunner;
 import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.exceptions.ClientException;
 import org.neo4j.driver.v1.summary.ResultSummary;
-import org.neo4j.driver.v1.util.TestNeo4j;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -68,17 +68,17 @@ import static org.neo4j.driver.v1.Config.defaultConfig;
 import static org.neo4j.driver.v1.Values.parameters;
 import static org.neo4j.driver.v1.util.TestUtil.await;
 
+@ExtendWith( Neo4jExtension.class )
 public class ConnectionHandlingIT
 {
-    @ClassRule
-    public static final TestNeo4j neo4j = new TestNeo4j();
-
+    private Neo4jExtension neo4j;
     private Driver driver;
     private MemorizingConnectionPool connectionPool;
 
-    @Before
-    public void createDriver()
+    @BeforeEach
+    public void createDriver( Neo4jExtension neo4jExtension )
     {
+        neo4j = neo4jExtension;
         DriverFactoryWithConnectionPool driverFactory = new DriverFactoryWithConnectionPool();
         AuthToken auth = neo4j.authToken();
         RoutingSettings routingSettings = new RoutingSettings( 1, 1, null );
@@ -88,7 +88,7 @@ public class ConnectionHandlingIT
         connectionPool.startMemorizing(); // start memorizing connections after driver creation
     }
 
-    @After
+    @AfterEach
     public void closeDriver()
     {
         driver.close();
@@ -319,7 +319,6 @@ public class ConnectionHandlingIT
         {
             super( connector, bootstrap, settings, logging, clock );
         }
-
 
         void startMemorizing()
         {

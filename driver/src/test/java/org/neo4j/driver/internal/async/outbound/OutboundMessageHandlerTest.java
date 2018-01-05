@@ -21,9 +21,9 @@ package org.neo4j.driver.internal.async.outbound;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.EncoderException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -41,10 +41,10 @@ import org.neo4j.driver.internal.packstream.PackStream;
 import org.neo4j.driver.v1.Value;
 
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.doAnswer;
@@ -60,13 +60,13 @@ public class OutboundMessageHandlerTest
 {
     private final EmbeddedChannel channel = new EmbeddedChannel();
 
-    @Before
+    @BeforeEach
     public void setUp()
     {
         ChannelAttributes.setMessageDispatcher( channel, new InboundMessageDispatcher( channel, DEV_NULL_LOGGING ) );
     }
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         channel.finishAndReleaseAll();

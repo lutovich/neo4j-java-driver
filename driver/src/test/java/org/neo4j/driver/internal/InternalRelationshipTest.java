@@ -18,7 +18,7 @@
  */
 package org.neo4j.driver.internal;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,8 +28,8 @@ import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.util.Function;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.neo4j.driver.v1.Values.NULL;
 import static org.neo4j.driver.v1.Values.value;
 

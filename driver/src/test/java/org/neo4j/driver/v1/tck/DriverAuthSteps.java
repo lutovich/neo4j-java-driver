@@ -39,8 +39,8 @@ import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.util.Neo4jSettings;
 
 import static org.hamcrest.CoreMatchers.startsWith;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.neo4j.driver.v1.Values.ofValue;
 import static org.neo4j.driver.v1.Values.parameters;
 import static org.neo4j.driver.v1.tck.DriverComplianceIT.neo4j;
@@ -135,7 +135,7 @@ public class DriverAuthSteps
             error = driverCreationError;
         }
 
-        assertNotNull( "Exception should have been thrown", error );
+        assertNotNull( error, "Exception should have been thrown" );
         assertThat( error.getMessage(), startsWith( "The client is unauthorized due to authentication failure" ) );
     }
 

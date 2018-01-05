@@ -18,9 +18,9 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.neo4j.driver.internal.util.ServerVersion;
 import org.neo4j.driver.v1.Config;
@@ -31,27 +31,27 @@ import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.exceptions.ClientException;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 import org.neo4j.driver.v1.util.Neo4jSettings;
 import org.neo4j.driver.v1.util.Neo4jSettings.BoltTlsLevel;
-import org.neo4j.driver.v1.util.TestNeo4j;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.driver.internal.util.ServerVersion.v3_1_0;
 
+@ExtendWith( Neo4jExtension.class )
 public class EncryptionIT
 {
-    @Rule
-    public final TestNeo4j neo4j = new TestNeo4j();
-
+    private Neo4jExtension neo4j;
     private ServerVersion neo4jVersion;
 
-    @Before
-    public void setUp()
+    @BeforeEach
+    public void setUp( Neo4jExtension neo4jExtension )
     {
+        neo4j = neo4jExtension;
         neo4jVersion = neo4j.version();
     }
 

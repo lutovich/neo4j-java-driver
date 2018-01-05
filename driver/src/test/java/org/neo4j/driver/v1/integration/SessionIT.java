@@ -19,12 +19,10 @@
 package org.neo4j.driver.v1.integration;
 
 import org.hamcrest.MatcherAssert;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.RuleChain;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.HashSet;
 import java.util.List;
@@ -65,7 +63,7 @@ import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 import org.neo4j.driver.v1.exceptions.TransientException;
 import org.neo4j.driver.v1.summary.ResultSummary;
 import org.neo4j.driver.v1.summary.StatementType;
-import org.neo4j.driver.v1.util.TestNeo4j;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 import org.neo4j.driver.v1.util.TestUtil;
 
 import static java.lang.String.format;
@@ -80,15 +78,16 @@ import static org.hamcrest.Matchers.emptyArray;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -101,18 +100,20 @@ import static org.neo4j.driver.v1.Values.parameters;
 import static org.neo4j.driver.v1.util.DaemonThreadFactory.daemon;
 import static org.neo4j.driver.v1.util.Neo4jRunner.DEFAULT_AUTH_TOKEN;
 
+@ExtendWith( Neo4jExtension.class )
 public class SessionIT
 {
-    private final TestNeo4j neo4j = new TestNeo4j();
-    private final ExpectedException exception = ExpectedException.none();
-
-    @Rule
-    public final RuleChain ruleChain = RuleChain.outerRule( neo4j ).around( exception ).around( Timeout.seconds( 60 ) );
-
+    private Neo4jExtension neo4j;
     private Driver driver;
     private ExecutorService executor;
 
-    @After
+    @BeforeEach
+    public void beforeEach( Neo4jExtension neo4jExtension )
+    {
+        neo4j = neo4jExtension;
+    }
+
+    @AfterEach
     public void tearDown()
     {
         if ( driver != null )
@@ -158,11 +159,9 @@ public class SessionIT
     {
         AuthToken token = null;
 
-        exception.expect( AuthenticationException.class );
-
         // null auth token should be interpreted as AuthTokens.none() and fail driver creation
         // because server expects basic auth
-        driver = GraphDatabase.driver( neo4j.uri(), token );
+        assertThrows( AuthenticationException.class, () -> GraphDatabase.driver( neo4j.uri(), token ) );
     }
 
     @Test
@@ -262,11 +261,10 @@ public class SessionIT
             // Then
             assertThat( tx2, notNullValue() );
 
-            exception.expect( ClientException.class ); // errors differ depending of neo4j version
-            exception.expectMessage(
-                    "Cannot run more statements in this transaction, it has been terminated by `Session#reset()`" );
-
-            tx1.run( "RETURN 1" );
+            ClientException ex = assertThrows( ClientException.class, () -> tx1.run( "RETURN 1" ) );
+            assertEquals(
+                    "Cannot run more statements in this transaction, it has been terminated by `Session#reset()`",
+                    ex.getMessage() );
         }
     }
 
@@ -274,7 +272,6 @@ public class SessionIT
     @Test
     public void shouldThrowExceptionOnCloseIfResetFailureIsNotConsumed() throws Throwable
     {
-        // Given
         neo4j.ensureProcedures( "longRunningStatement.jar" );
 
         Session session = neo4j.driver().session();
@@ -283,11 +280,8 @@ public class SessionIT
         Thread.sleep( 1000 );
         session.reset();
 
-        exception.expect( Neo4jException.class ); // errors differ depending of neo4j version
-        exception.expectMessage( containsString( "The transaction has been terminated" ) );
-
-        // When & Then
-        session.close();
+        Neo4jException ex = assertThrows( Neo4jException.class, session::close );
+        assertThat( ex.getMessage(), containsString( "The transaction has been terminated" ) );
     }
 
     @SuppressWarnings( "deprecation" )
@@ -1627,8 +1621,7 @@ public class SessionIT
     private void assumeServerIs31OrLater()
     {
         ServerVersion serverVersion = ServerVersion.version( neo4j.driver() );
-        assumeTrue( "Ignored on `" + serverVersion + "`",
-                serverVersion.greaterThanOrEqual( v3_1_0 ) );
+        assumeTrue( serverVersion.greaterThanOrEqual( v3_1_0 ), "Ignored on `" + serverVersion + "`" );
     }
 
     private void testExecuteReadTx( AccessMode sessionMode )
@@ -1791,8 +1784,8 @@ public class SessionIT
     private static void assumeBookmarkSupport( Driver driver )
     {
         ServerVersion serverVersion = ServerVersion.version( driver );
-        assumeTrue( format( "Server version `%s` does not support bookmark", serverVersion ),
-                serverVersion.greaterThanOrEqual( v3_1_0 ) );
+        assumeTrue( serverVersion.greaterThanOrEqual( v3_1_0 ),
+                format( "Server version `%s` does not support bookmark", serverVersion ) );
     }
 
     private int countNodesWithId( int id )
@@ -1852,7 +1845,7 @@ public class SessionIT
         }
         catch ( ExecutionException e )
         {
-            assertFalse( "Both futures failed, ", firstFailed );
+            assertFalse( firstFailed, "Both futures failed, " );
             assertDeadlockDetectedError( e );
         }
         return firstFailed;

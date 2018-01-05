@@ -16,33 +16,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.neo4j.driver.internal.value;
+package org.neo4j.driver.v1.util;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolver;
 
-import org.neo4j.driver.internal.types.TypeConstructor;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-public class NullValueTest
+public abstract class SimpleParameterResolver implements ParameterResolver
 {
-    @Test
-    public void shouldEqualItself()
+    @Override
+    public final boolean supportsParameter( ParameterContext parameterContext, ExtensionContext extensionContext )
     {
-        assertThat( NullValue.NULL, equalTo( NullValue.NULL ) );
+        return parameterContext.getParameter().getType() == getClass();
     }
 
-    @Test
-    public void shouldBeNull()
+    @Override
+    public final Object resolveParameter( ParameterContext parameterContext, ExtensionContext extensionContext )
     {
-        assertTrue( NullValue.NULL.isNull() );
-    }
-
-    @Test
-    public void shouldTypeAsNull()
-    {
-        assertThat( ( (InternalValue) NullValue.NULL ).typeConstructor(), equalTo( TypeConstructor.NULL_TyCon ) );
+        return this;
     }
 }

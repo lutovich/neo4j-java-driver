@@ -19,9 +19,10 @@
 package org.neo4j.driver.v1.integration;
 
 import io.netty.channel.Channel;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,25 +40,30 @@ import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.exceptions.ClientException;
-import org.neo4j.driver.v1.util.TestNeo4j;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.driver.internal.retry.RetrySettings.DEFAULT;
 import static org.neo4j.driver.internal.util.Matchers.connectionAcquisitionTimeoutError;
 
+@ExtendWith( Neo4jExtension.class )
 public class ConnectionPoolIT
 {
-    @Rule
-    public final TestNeo4j neo4j = new TestNeo4j();
-
+    private Neo4jExtension neo4j;
     private Driver driver;
     private SessionGrabber sessionGrabber;
+
+    @BeforeEach
+    public void setUp( Neo4jExtension neo4jExtension )
+    {
+        neo4j = neo4jExtension;
+    }
 
     @Test
     public void shouldRecoverFromDownedServer() throws Throwable
@@ -140,7 +146,7 @@ public class ConnectionPoolIT
         }
     }
 
-    @After
+    @AfterEach
     public void cleanup() throws Exception
     {
         if ( driver != null )

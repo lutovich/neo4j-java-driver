@@ -20,9 +20,9 @@ package org.neo4j.driver.internal.async;
 
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.CodecException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -33,9 +33,9 @@ import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.neo4j.driver.internal.async.ChannelAttributes.setMessageDispatcher;
 import static org.neo4j.driver.internal.async.ChannelAttributes.setTerminationReason;
 import static org.neo4j.driver.internal.logging.DevNullLogging.DEV_NULL_LOGGING;
@@ -45,7 +45,7 @@ public class ChannelErrorHandlerTest
     private EmbeddedChannel channel;
     private InboundMessageDispatcher messageDispatcher;
 
-    @Before
+    @BeforeEach
     public void setUp()
     {
         channel = new EmbeddedChannel();
@@ -54,7 +54,7 @@ public class ChannelErrorHandlerTest
         channel.pipeline().addLast( new ChannelErrorHandler( DEV_NULL_LOGGING ) );
     }
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         if ( channel != null )

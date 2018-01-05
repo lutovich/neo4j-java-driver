@@ -18,7 +18,7 @@
  */
 package org.neo4j.driver.v1;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +30,7 @@ import org.neo4j.driver.internal.value.StringValue;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.neo4j.driver.v1.AuthTokens.basic;
 import static org.neo4j.driver.v1.AuthTokens.custom;
 import static org.neo4j.driver.v1.Values.values;

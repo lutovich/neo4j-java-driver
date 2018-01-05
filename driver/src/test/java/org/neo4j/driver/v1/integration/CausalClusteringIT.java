@@ -18,9 +18,9 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.AfterClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -59,9 +59,9 @@ import org.neo4j.driver.v1.exceptions.TransientException;
 import org.neo4j.driver.v1.summary.ResultSummary;
 import org.neo4j.driver.v1.util.Function;
 import org.neo4j.driver.v1.util.cc.Cluster;
+import org.neo4j.driver.v1.util.cc.ClusterExtension;
 import org.neo4j.driver.v1.util.cc.ClusterMember;
 import org.neo4j.driver.v1.util.cc.ClusterMemberRole;
-import org.neo4j.driver.v1.util.cc.ClusterRule;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -69,34 +69,34 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.driver.internal.logging.DevNullLogging.DEV_NULL_LOGGING;
 import static org.neo4j.driver.internal.util.Matchers.connectionAcquisitionTimeoutError;
 import static org.neo4j.driver.v1.Values.parameters;
 import static org.neo4j.driver.v1.util.TestUtil.await;
 
+@ExtendWith( ClusterExtension.class )
 public class CausalClusteringIT
 {
     private static final long DEFAULT_TIMEOUT_MS = 120_000;
 
-    @Rule
-    public final ClusterRule clusterRule = new ClusterRule();
+    private ClusterExtension clusterExtension;
 
-    @AfterClass
-    public static void stopSharedCluster()
+    @BeforeEach
+    void setUp( ClusterExtension clusterExtension )
     {
-        ClusterRule.stopSharedCluster();
+        this.clusterExtension = clusterExtension;
     }
 
     @Test
     public void shouldExecuteReadAndWritesWhenDriverSuppliedWithAddressOfLeader() throws Exception
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
 
         int count = executeWriteAndReadThroughBolt( cluster.leader() );
 
@@ -106,7 +106,7 @@ public class CausalClusteringIT
     @Test
     public void shouldExecuteReadAndWritesWhenRouterIsDiscovered() throws Exception
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
 
         int count = executeWriteAndReadThroughBoltOnFirstAvailableAddress( cluster.anyReadReplica(), cluster.leader() );
 
@@ -116,7 +116,7 @@ public class CausalClusteringIT
     @Test
     public void shouldExecuteReadAndWritesWhenDriverSuppliedWithAddressOfFollower() throws Exception
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
 
         int count = executeWriteAndReadThroughBolt( cluster.anyFollower() );
 
@@ -126,7 +126,7 @@ public class CausalClusteringIT
     @Test
     public void sessionCreationShouldFailIfCallingDiscoveryProcedureOnEdgeServer() throws Exception
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
 
         ClusterMember readReplica = cluster.anyReadReplica();
         try
@@ -144,7 +144,7 @@ public class CausalClusteringIT
     @Test
     public void bookmarksShouldWorkWithDriverPinnedToSingleServer() throws Exception
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
         ClusterMember leader = cluster.leader();
 
         try ( Driver driver = createDriver( leader.getBoltUri() ) )
@@ -179,7 +179,7 @@ public class CausalClusteringIT
     @Test
     public void shouldUseBookmarkFromAReadSessionInAWriteSession() throws Exception
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
         ClusterMember leader = cluster.leader();
 
         try ( Driver driver = createDriver( leader.getBoltUri() ) )
@@ -234,7 +234,7 @@ public class CausalClusteringIT
     @Test
     public void shouldDropBrokenOldSessions() throws Exception
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
 
         int concurrentSessionsCount = 9;
         int livenessCheckTimeoutMinutes = 2;
@@ -248,7 +248,7 @@ public class CausalClusteringIT
         ChannelTrackingDriverFactory driverFactory = new ChannelTrackingDriverFactory( clock );
 
         URI routingUri = cluster.leader().getRoutingUri();
-        AuthToken auth = clusterRule.getDefaultAuthToken();
+        AuthToken auth = clusterExtension.getDefaultAuthToken();
         RoutingSettings routingSettings = new RoutingSettings( 1, SECONDS.toMillis( 5 ), null );
         RetrySettings retrySettings = RetrySettings.DEFAULT;
 
@@ -277,7 +277,7 @@ public class CausalClusteringIT
     public void beginTransactionThrowsForInvalidBookmark()
     {
         String invalidBookmark = "hi, this is an invalid bookmark";
-        ClusterMember leader = clusterRule.getCluster().leader();
+        ClusterMember leader = clusterExtension.getCluster().leader();
 
         try ( Driver driver = createDriver( leader.getBoltUri() );
               Session session = driver.session( invalidBookmark ) )
@@ -299,7 +299,7 @@ public class CausalClusteringIT
     @Test
     public void beginTransactionThrowsForUnreachableBookmark()
     {
-        ClusterMember leader = clusterRule.getCluster().leader();
+        ClusterMember leader = clusterExtension.getCluster().leader();
 
         try ( Driver driver = createDriver( leader.getBoltUri() );
               Session session = driver.session() )
@@ -330,7 +330,7 @@ public class CausalClusteringIT
     @Test
     public void shouldHandleGracefulLeaderSwitch() throws Exception
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
         ClusterMember leader = cluster.leader();
 
         try ( Driver driver = createDriver( leader.getRoutingUri() ) )
@@ -376,7 +376,7 @@ public class CausalClusteringIT
     @Test
     public void shouldNotServeWritesWhenMajorityOfCoresAreDead() throws Exception
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
         ClusterMember leader = cluster.leader();
 
         try ( Driver driver = createDriver( leader.getRoutingUri() ) )
@@ -406,7 +406,7 @@ public class CausalClusteringIT
     @Test
     public void shouldServeReadsWhenMajorityOfCoresAreDead() throws Exception
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
         ClusterMember leader = cluster.leader();
 
         try ( Driver driver = createDriver( leader.getRoutingUri() ) )
@@ -473,7 +473,7 @@ public class CausalClusteringIT
         String property = "name";
         String value = "Alice";
 
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
         ClusterMember leader = cluster.leader();
         ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -505,7 +505,7 @@ public class CausalClusteringIT
     @Test
     public void shouldNotReuseReadConnectionForWriteTransaction()
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
         ClusterMember leader = cluster.leader();
 
         try ( Driver driver = createDriver( leader.getRoutingUri() ) )
@@ -543,7 +543,7 @@ public class CausalClusteringIT
     @Test
     public void shouldRespectMaxConnectionPoolSizePerClusterMember()
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
         ClusterMember leader = cluster.leader();
 
         Config config = Config.build()
@@ -583,14 +583,14 @@ public class CausalClusteringIT
     @Test
     public void shouldAllowExistingTransactionToCompleteAfterDifferentConnectionBreaks()
     {
-        Cluster cluster = clusterRule.getCluster();
+        Cluster cluster = clusterExtension.getCluster();
         ClusterMember leader = cluster.leader();
 
         FailingConnectionDriverFactory driverFactory = new FailingConnectionDriverFactory();
         RoutingSettings routingSettings = new RoutingSettings( 1, SECONDS.toMillis( 5 ), null );
         Config config = Config.build().toConfig();
 
-        try ( Driver driver = driverFactory.newInstance( leader.getRoutingUri(), clusterRule.getDefaultAuthToken(),
+        try ( Driver driver = driverFactory.newInstance( leader.getRoutingUri(), clusterExtension.getDefaultAuthToken(),
                 routingSettings, RetrySettings.DEFAULT, config ) )
         {
             Session session1 = driver.session();
@@ -823,7 +823,7 @@ public class CausalClusteringIT
 
     private Driver createDriver( URI boltUri, Config config )
     {
-        return GraphDatabase.driver( boltUri, clusterRule.getDefaultAuthToken(), config );
+        return GraphDatabase.driver( boltUri, clusterExtension.getDefaultAuthToken(), config );
     }
 
     private Driver discoverDriver( List<URI> routingUris )
@@ -832,7 +832,7 @@ public class CausalClusteringIT
                 .withLogging( DEV_NULL_LOGGING )
                 .toConfig();
 
-        return GraphDatabase.routingDriver( routingUris, clusterRule.getDefaultAuthToken(), config );
+        return GraphDatabase.routingDriver( routingUris, clusterExtension.getDefaultAuthToken(), config );
     }
 
     private static void createNodesInDifferentThreads( int count, final Driver driver ) throws Exception

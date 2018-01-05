@@ -18,7 +18,7 @@
  */
 package org.neo4j.driver.internal.async;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.concurrent.CompletionStage;
@@ -28,9 +28,9 @@ import org.neo4j.driver.internal.InternalStatementResultCursor;
 import org.neo4j.driver.internal.util.Futures;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.neo4j.driver.v1.util.TestUtil.await;

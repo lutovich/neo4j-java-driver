@@ -23,9 +23,9 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.EncoderException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -41,10 +41,10 @@ import org.neo4j.driver.v1.Values;
 
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.driver.internal.async.ChannelAttributes.serverVersion;
 import static org.neo4j.driver.internal.async.ChannelAttributes.setMessageDispatcher;
 import static org.neo4j.driver.internal.async.outbound.OutboundMessageHandler.NAME;
@@ -55,7 +55,7 @@ public class InitResponseHandlerTest
 {
     private final EmbeddedChannel channel = new EmbeddedChannel();
 
-    @Before
+    @BeforeEach
     public void setUp()
     {
         setMessageDispatcher( channel, new InboundMessageDispatcher( channel, DEV_NULL_LOGGING ) );
@@ -64,7 +64,7 @@ public class InitResponseHandlerTest
         pipeline.addLast( new ChannelErrorHandler( DEV_NULL_LOGGING ) );
     }
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         channel.finishAndReleaseAll();

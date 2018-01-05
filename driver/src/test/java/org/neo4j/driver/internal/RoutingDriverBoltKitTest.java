@@ -18,9 +18,7 @@
  */
 package org.neo4j.driver.internal;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URI;
@@ -56,18 +54,16 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class RoutingDriverBoltKitTest
 {
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-
     private static final Config config = Config.build()
             .withoutEncryption()
             .withLogging( new ConsoleLogging( Level.INFO ) ).toConfig();
@@ -209,18 +205,18 @@ public class RoutingDriverBoltKitTest
         URI uri = URI.create( "bolt+routing://127.0.0.1:9001" );
 
         //Expect
-        exception.expect( SessionExpiredException.class );
-        exception.expectMessage( "Server at 127.0.0.1:9005 is no longer available" );
+        SessionExpiredException ex = assertThrows( SessionExpiredException.class,
+                () ->
+                {
+                    try ( Driver driver = GraphDatabase.driver( uri, config );
+                          Session session = driver.session( AccessMode.READ ) )
+                    {
+                        session.run( "MATCH (n) RETURN n.name" );
+                    }
+                } );
 
-        try ( Driver driver = GraphDatabase.driver( uri, config );
-              Session session = driver.session( AccessMode.READ ) )
-        {
-            session.run( "MATCH (n) RETURN n.name" );
-        }
-        finally
-        {
-            assertThat( server.exitStatus(), equalTo( 0 ) );
-        }
+        assertEquals( "Server at 127.0.0.1:9005 is no longer available", ex.getMessage() );
+        assertThat( server.exitStatus(), equalTo( 0 ) );
     }
 
     @Test
@@ -235,20 +231,20 @@ public class RoutingDriverBoltKitTest
         URI uri = URI.create( "bolt+routing://127.0.0.1:9001" );
 
         //Expect
-        exception.expect( SessionExpiredException.class );
-        exception.expectMessage( "Server at 127.0.0.1:9005 is no longer available" );
+        SessionExpiredException ex = assertThrows( SessionExpiredException.class,
+                () ->
+                {
+                    try ( Driver driver = GraphDatabase.driver( uri, config );
+                          Session session = driver.session( AccessMode.READ );
+                          Transaction tx = session.beginTransaction() )
+                    {
+                        tx.run( "MATCH (n) RETURN n.name" );
+                        tx.success();
+                    }
+                } );
 
-        try ( Driver driver = GraphDatabase.driver( uri, config );
-              Session session = driver.session( AccessMode.READ );
-              Transaction tx = session.beginTransaction() )
-        {
-            tx.run( "MATCH (n) RETURN n.name" );
-            tx.success();
-        }
-        finally
-        {
-            assertThat( server.exitStatus(), equalTo( 0 ) );
-        }
+        assertEquals( "Server at 127.0.0.1:9005 is no longer available", ex.getMessage() );
+        assertThat( server.exitStatus(), equalTo( 0 ) );
     }
 
     @Test
@@ -263,18 +259,18 @@ public class RoutingDriverBoltKitTest
         URI uri = URI.create( "bolt+routing://127.0.0.1:9001" );
 
         //Expect
-        exception.expect( SessionExpiredException.class );
-        //exception.expectMessage( "Server at 127.0.0.1:9006 is no longer available" );
+        SessionExpiredException ex = assertThrows( SessionExpiredException.class,
+                () ->
+                {
+                    try ( Driver driver = GraphDatabase.driver( uri, config );
+                          Session session = driver.session( AccessMode.WRITE ) )
+                    {
+                        session.run( "MATCH (n) RETURN n.name" ).consume();
+                    }
+                } );
 
-        try ( Driver driver = GraphDatabase.driver( uri, config );
-              Session session = driver.session( AccessMode.WRITE ) )
-        {
-            session.run( "MATCH (n) RETURN n.name" ).consume();
-        }
-        finally
-        {
-            assertThat( server.exitStatus(), equalTo( 0 ) );
-        }
+        assertEquals( "Server at 127.0.0.1:9007 is no longer available", ex.getMessage() );
+        assertThat( server.exitStatus(), equalTo( 0 ) );
     }
 
     @Test
@@ -289,19 +285,19 @@ public class RoutingDriverBoltKitTest
 
         URI uri = URI.create( "bolt+routing://127.0.0.1:9001" );
         //Expect
-        exception.expect( SessionExpiredException.class );
+        assertThrows( SessionExpiredException.class,
+                () ->
+                {
+                    try ( Driver driver = GraphDatabase.driver( uri, config );
+                          Session session = driver.session( AccessMode.WRITE );
+                          Transaction tx = session.beginTransaction() )
+                    {
+                        tx.run( "MATCH (n) RETURN n.name" ).consume();
+                        tx.success();
+                    }
+                } );
 
-        try ( Driver driver = GraphDatabase.driver( uri, config );
-              Session session = driver.session( AccessMode.WRITE );
-              Transaction tx = session.beginTransaction() )
-        {
-            tx.run( "MATCH (n) RETURN n.name" ).consume();
-            tx.success();
-        }
-        finally
-        {
-            assertThat( server.exitStatus(), equalTo( 0 ) );
-        }
+        assertThat( server.exitStatus(), equalTo( 0 ) );
     }
 
     @Test
@@ -402,29 +398,19 @@ public class RoutingDriverBoltKitTest
     @Test
     public void shouldFailOnNonDiscoverableServer() throws IOException, InterruptedException, StubServer.ForceKilled
     {
-        // Given
         StubServer.start( "non_discovery_server.script", 9001 );
         URI uri = URI.create( "bolt+routing://127.0.0.1:9001" );
 
-        //Expect
-        exception.expect( ServiceUnavailableException.class );
-
-        // When
-        GraphDatabase.driver( uri, config );
+        assertThrows( ServiceUnavailableException.class, () -> GraphDatabase.driver( uri, config ) );
     }
 
     @Test
     public void shouldFailRandomFailureInGetServers() throws IOException, InterruptedException, StubServer.ForceKilled
     {
-        // Given
         StubServer.start( "failed_discovery.script", 9001 );
         URI uri = URI.create( "bolt+routing://127.0.0.1:9001" );
 
-        //Expect
-        exception.expect( ServiceUnavailableException.class );
-
-        // When
-        GraphDatabase.driver( uri, config );
+        assertThrows( ServiceUnavailableException.class, () -> GraphDatabase.driver( uri, config ) );
     }
 
     @Test

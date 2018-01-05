@@ -19,9 +19,7 @@
 package org.neo4j.driver.internal;
 
 import org.hamcrest.Matchers;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -42,8 +40,9 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.neo4j.driver.v1.Values.ofDouble;
 import static org.neo4j.driver.v1.Values.ofFloat;
 import static org.neo4j.driver.v1.Values.ofInteger;
@@ -59,9 +58,6 @@ import static org.neo4j.driver.v1.Values.values;
 
 public class ValuesTest
 {
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-
     @Test
     public void shouldConvertPrimitiveArrays() throws Throwable
     {
@@ -88,14 +84,10 @@ public class ValuesTest
     }
 
     @Test
-    public void shouldComplainAboutStrangeTypes() throws Throwable
+    public void shouldComplainAboutStrangeTypes()
     {
-        // Expect
-        exception.expect( ClientException.class );
-        exception.expectMessage( "Unable to convert java.lang.Object to Neo4j Value." );
-
-        // When
-        value( new Object() );
+        ClientException ex = assertThrows( ClientException.class, () -> value( new Object() ) );
+        assertEquals( "Unable to convert java.lang.Object to Neo4j Value.", ex.getMessage() );
     }
 
     @Test
@@ -173,33 +165,21 @@ public class ValuesTest
     }
 
     @Test
-    public void shouldNotBeAbleToGetKeysFromNonKeyedValue() throws Throwable
+    public void shouldNotBeAbleToGetKeysFromNonKeyedValue()
     {
-        // expect
-        exception.expect( ClientException.class );
-
-        // when
-        value( "asd" ).get(1);
+        assertThrows( ClientException.class, () -> value( "asd" ).get( 1 ) );
     }
 
     @Test
     public void shouldNotBeAbleToDoCrazyCoercions() throws Throwable
     {
-        // expect
-        exception.expect( ClientException.class );
-
-        // when
-        value(1).asPath();
+        assertThrows( ClientException.class, () -> value( 1 ).asPath() );
     }
 
     @Test
     public void shouldNotBeAbleToGetSizeOnNonSizedValues() throws Throwable
     {
-        // expect
-        exception.expect( ClientException.class );
-
-        // when
-        value(1).size();
+        assertThrows( ClientException.class, () -> value( 1 ).size() );
     }
 
     @Test

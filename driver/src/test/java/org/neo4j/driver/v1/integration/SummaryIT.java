@@ -18,12 +18,14 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.Values;
@@ -32,24 +34,30 @@ import org.neo4j.driver.v1.summary.Plan;
 import org.neo4j.driver.v1.summary.ProfiledPlan;
 import org.neo4j.driver.v1.summary.ResultSummary;
 import org.neo4j.driver.v1.summary.StatementType;
-import org.neo4j.driver.v1.util.TestNeo4jSession;
+import org.neo4j.driver.v1.util.Neo4jSessionExtension;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.driver.internal.util.ServerVersion.v3_1_0;
 import static org.neo4j.driver.internal.util.ServerVersion.version;
 
+@ExtendWith( Neo4jSessionExtension.class )
 public class SummaryIT
 {
-    @Rule
-    public TestNeo4jSession session = new TestNeo4jSession();
+    private Session session;
+
+    @BeforeEach
+    public void setUp( Neo4jSessionExtension sessionExtension )
+    {
+        session = sessionExtension;
+    }
 
     @Test
     public void shouldContainBasicMetadata() throws Throwable
@@ -158,7 +166,6 @@ public class SummaryIT
         assertEquals( 0, profile.dbHits() );
         assertEquals( 1, profile.records() );
     }
-
 
     @Test
     public void shouldContainNotifications() throws Throwable

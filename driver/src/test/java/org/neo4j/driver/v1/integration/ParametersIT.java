@@ -18,9 +18,9 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -33,25 +33,30 @@ import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 import org.neo4j.driver.v1.types.Node;
 import org.neo4j.driver.v1.types.Path;
 import org.neo4j.driver.v1.types.Relationship;
-import org.neo4j.driver.v1.util.TestNeo4jSession;
+import org.neo4j.driver.v1.util.Neo4jSessionExtension;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.neo4j.driver.internal.util.ServerVersion.version;
 import static org.neo4j.driver.v1.Values.ofValue;
 import static org.neo4j.driver.v1.Values.parameters;
 
+@ExtendWith( Neo4jSessionExtension.class )
 public class ParametersIT
 {
-    @Rule
-    public TestNeo4jSession session = new TestNeo4jSession();
+    private Neo4jSessionExtension session;
 
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
+    @BeforeEach
+    void setUp( Neo4jSessionExtension sessionExtension )
+    {
+        session = sessionExtension;
+    }
 
     @Test
     public void shouldBeAbleToSetAndReturnBooleanProperty()
@@ -388,57 +393,46 @@ public class ParametersIT
     @Test
     public void settingInvalidParameterTypeShouldThrowHelpfulError() throws Throwable
     {
-        // Expect
-        exception.expect( ClientException.class );
-        exception.expectMessage( "Unable to convert java.lang.Object to Neo4j Value." );
+        ClientException ex = assertThrows( ClientException.class,
+                () -> session.run( "anything", parameters( "k", new Object() ) ) );
 
-        // When
-        session.run( "anything", parameters( "k", new Object() ) );
+        assertEquals( "Unable to convert java.lang.Object to Neo4j Value.", ex.getMessage() );
     }
 
     @Test
     public void shouldNotBePossibleToUseNodeAsParameter()
     {
-        // GIVEN
         StatementResult cursor = session.run( "CREATE (a:Node) RETURN a" );
         Node node = cursor.single().get( 0 ).asNode();
 
-        //Expect
-        exception.expect( ClientException.class );
-        exception.expectMessage( "Nodes can't be used as parameters" );
+        ClientException ex = assertThrows( ClientException.class,
+                () -> session.run( "RETURN {a}", parameters( "a", node ) ) );
 
-        // WHEN
-        session.run( "RETURN {a}", parameters( "a", node ) );
+        assertEquals( "Nodes can't be used as parameters.", ex.getMessage() );
     }
 
     @Test
     public void shouldNotBePossibleToUseRelationshipAsParameter()
     {
-        // GIVEN
         StatementResult cursor = session.run( "CREATE (a:Node), (b:Node), (a)-[r:R]->(b) RETURN r" );
         Relationship relationship = cursor.single().get( 0 ).asRelationship();
 
-        //Expect
-        exception.expect( ClientException.class );
-        exception.expectMessage( "Relationships can't be used as parameters" );
+        ClientException ex = assertThrows( ClientException.class,
+                () -> session.run( "RETURN {a}", parameters( "a", relationship ) ) );
 
-        // WHEN
-        session.run( "RETURN {a}", parameters( "a", relationship ) );
+        assertEquals( "Relationships can't be used as parameters.", ex.getMessage() );
     }
 
     @Test
     public void shouldNotBePossibleToUsePathAsParameter()
     {
-        // GIVEN
         StatementResult cursor = session.run( "CREATE (a:Node), (b:Node), p=(a)-[r:R]->(b) RETURN p" );
         Path path = cursor.single().get( 0 ).asPath();
 
-        //Expect
-        exception.expect( ClientException.class );
-        exception.expectMessage( "Paths can't be used as parameters" );
+        ClientException ex = assertThrows( ClientException.class,
+                () -> session.run( "RETURN {a}", parameters( "a", path ) ) );
 
-        // WHEN
-        session.run( "RETURN {a}", parameters( "a", path ) );
+        assertEquals( "Paths can't be used as parameters.", ex.getMessage() );
     }
 
     private void testBytesProperty( byte[] array )

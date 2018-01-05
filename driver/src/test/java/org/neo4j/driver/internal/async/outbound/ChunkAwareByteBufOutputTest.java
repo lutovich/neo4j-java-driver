@@ -20,35 +20,34 @@ package org.neo4j.driver.internal.async.outbound;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.neo4j.driver.v1.util.TestUtil.assertByteBufContains;
 
-@RunWith( Parameterized.class )
 public class ChunkAwareByteBufOutputTest
 {
-    private final ByteBuf buf;
-
-    public ChunkAwareByteBufOutputTest( int bufferCapacity )
-    {
-        this.buf = Unpooled.buffer( bufferCapacity );
-    }
-
-    @Parameters( name = "buffer capacity {0}" )
-    public static List<Integer> bufferSizes()
+    static List<Integer> bufferCapacities()
     {
         return IntStream.iterate( 1, size -> size * 2 ).limit( 20 ).boxed().collect( toList() );
+    }
+
+    @ParameterizedTest( name = "buffer capacity {0}" )
+    @MethodSource( "bufferCapacities" )
+    @Retention( RetentionPolicy.RUNTIME )
+    public @interface ParameterizedWithBufferCapacityTest
+    {
     }
 
     @Test
@@ -98,9 +97,10 @@ public class ChunkAwareByteBufOutputTest
         }
     }
 
-    @Test
-    public void shouldWriteByteAtTheBeginningOfChunk()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteByteAtTheBeginningOfChunk( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 16 );
 
         output.start( buf );
@@ -110,9 +110,10 @@ public class ChunkAwareByteBufOutputTest
         assertByteBufContains( buf, (short) 1, (byte) 42 );
     }
 
-    @Test
-    public void shouldWriteByteWhenCurrentChunkContainsSpace()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteByteWhenCurrentChunkContainsSpace( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 16 );
 
         output.start( buf );
@@ -126,9 +127,10 @@ public class ChunkAwareByteBufOutputTest
         assertByteBufContains( buf, (short) 4, (byte) 1, (byte) 2, (byte) -24, (byte) 42 );
     }
 
-    @Test
-    public void shouldWriteByteWhenCurrentChunkIsFull()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteByteWhenCurrentChunkIsFull( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 5 );
 
         output.start( buf );
@@ -145,9 +147,10 @@ public class ChunkAwareByteBufOutputTest
         );
     }
 
-    @Test
-    public void shouldWriteShortAtTheBeginningOfChunk()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteShortAtTheBeginningOfChunk( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 10 );
 
         output.start( buf );
@@ -157,9 +160,10 @@ public class ChunkAwareByteBufOutputTest
         assertByteBufContains( buf, (short) 2, Short.MAX_VALUE );
     }
 
-    @Test
-    public void shouldWriteShortWhenCurrentChunkContainsSpace()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteShortWhenCurrentChunkContainsSpace( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 12 );
 
         output.start( buf );
@@ -174,9 +178,10 @@ public class ChunkAwareByteBufOutputTest
         assertByteBufContains( buf, (short) 10, (short) 1, (short) 42, (short) 4242, (short) 4242, (short) -30 );
     }
 
-    @Test
-    public void shouldWriteShortWhenCurrentChunkIsFull()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteShortWhenCurrentChunkIsFull( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 8 );
 
         output.start( buf );
@@ -193,9 +198,10 @@ public class ChunkAwareByteBufOutputTest
         );
     }
 
-    @Test
-    public void shouldWriteIntAtTheBeginningOfChunk()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteIntAtTheBeginningOfChunk( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 18 );
 
         output.start( buf );
@@ -205,9 +211,10 @@ public class ChunkAwareByteBufOutputTest
         assertByteBufContains( buf, (short) 4, 73649 );
     }
 
-    @Test
-    public void shouldWriteIntWhenCurrentChunkContainsSpace()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteIntWhenCurrentChunkContainsSpace( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 40 );
 
         output.start( buf );
@@ -221,9 +228,10 @@ public class ChunkAwareByteBufOutputTest
         assertByteBufContains( buf, (short) 16, Integer.MAX_VALUE, 20, -173, Integer.MIN_VALUE );
     }
 
-    @Test
-    public void shouldWriteIntWhenCurrentChunkIsFull()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteIntWhenCurrentChunkIsFull( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 27 );
 
         output.start( buf );
@@ -243,9 +251,10 @@ public class ChunkAwareByteBufOutputTest
         );
     }
 
-    @Test
-    public void shouldWriteLongAtTheBeginningOfChunk()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteLongAtTheBeginningOfChunk( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 12 );
 
         output.start( buf );
@@ -255,9 +264,10 @@ public class ChunkAwareByteBufOutputTest
         assertByteBufContains( buf, (short) 8, 15L );
     }
 
-    @Test
-    public void shouldWriteLongWhenCurrentChunkContainsSpace()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteLongWhenCurrentChunkContainsSpace( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 34 );
 
         output.start( buf );
@@ -271,9 +281,10 @@ public class ChunkAwareByteBufOutputTest
         assertByteBufContains( buf, (short) 32, Long.MAX_VALUE, -1L, -100L, Long.MIN_VALUE / 2 );
     }
 
-    @Test
-    public void shouldWriteLongWhenCurrentChunkIsFull()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteLongWhenCurrentChunkIsFull( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 38 );
 
         output.start( buf );
@@ -291,9 +302,10 @@ public class ChunkAwareByteBufOutputTest
         );
     }
 
-    @Test
-    public void shouldWriteDoubleAtTheBeginningOfChunk()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteDoubleAtTheBeginningOfChunk( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 10 );
 
         output.start( buf );
@@ -303,9 +315,10 @@ public class ChunkAwareByteBufOutputTest
         assertByteBufContains( buf, (short) 8, 12.99937D );
     }
 
-    @Test
-    public void shouldWriteDoubleWhenCurrentChunkContainsSpace()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteDoubleWhenCurrentChunkContainsSpace( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 18 );
 
         output.start( buf );
@@ -317,9 +330,10 @@ public class ChunkAwareByteBufOutputTest
         assertByteBufContains( buf, (short) 16, -5D, 991.3333D );
     }
 
-    @Test
-    public void shouldWriteDoubleWhenCurrentChunkIsFull()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteDoubleWhenCurrentChunkIsFull( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 20 );
 
         output.start( buf );
@@ -335,9 +349,10 @@ public class ChunkAwareByteBufOutputTest
         );
     }
 
-    @Test
-    public void shouldWriteBytesAtTheBeginningOfChunk()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteBytesAtTheBeginningOfChunk( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 10 );
 
         output.start( buf );
@@ -348,9 +363,10 @@ public class ChunkAwareByteBufOutputTest
                 (short) 7, (byte) 1, (byte) 2, (byte) 3, (byte) -1, (byte) -2, (byte) -3, (byte) 127 );
     }
 
-    @Test
-    public void shouldWriteBytesWhenCurrentChunkContainsSpace()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteBytesWhenCurrentChunkContainsSpace( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 13 );
 
         output.start( buf );
@@ -365,9 +381,10 @@ public class ChunkAwareByteBufOutputTest
                 (byte) -126, (byte) 0, (byte) 99, (byte) -42, (byte) 42 );
     }
 
-    @Test
-    public void shouldWriteBytesWhenCurrentChunkIsFull()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteBytesWhenCurrentChunkIsFull( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 9 );
 
         output.start( buf );
@@ -384,9 +401,10 @@ public class ChunkAwareByteBufOutputTest
         );
     }
 
-    @Test
-    public void shouldWriteBytesThatSpanMultipleChunks()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteBytesThatSpanMultipleChunks( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 7 );
 
         output.start( buf );
@@ -401,9 +419,10 @@ public class ChunkAwareByteBufOutputTest
         );
     }
 
-    @Test
-    public void shouldWriteDataToMultipleChunks()
+    @ParameterizedWithBufferCapacityTest
+    public void shouldWriteDataToMultipleChunks( int capacity )
     {
+        ByteBuf buf = newBuffer( capacity );
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput( 13 );
 
         output.start( buf );
@@ -428,5 +447,10 @@ public class ChunkAwareByteBufOutputTest
                 (short) 11, (short) 1, 12345, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, // chunk 5
                 (short) 5, (byte) 6, (byte) 7, (byte) 8, (byte) 9, (byte) 10 // chunk 6
         );
+    }
+
+    private static ByteBuf newBuffer( int capacity )
+    {
+        return Unpooled.buffer( capacity );
     }
 }

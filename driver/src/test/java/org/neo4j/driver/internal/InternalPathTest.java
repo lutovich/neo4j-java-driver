@@ -19,9 +19,7 @@
 package org.neo4j.driver.internal;
 
 import org.hamcrest.MatcherAssert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,12 +31,10 @@ import org.neo4j.driver.v1.types.Relationship;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class InternalPathTest
 {
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     // (A)-[AB:KNOWS]->(B)<-[CB:KNOWS]-(C)-[CD:KNOWS]->(D)
     private InternalPath testPath()
     {
@@ -139,66 +135,43 @@ public class InternalPathTest
     @Test
     public void shouldNotBeAbleToCreatePathWithNoEntities()
     {
-        // Expect
-        thrown.expect( IllegalArgumentException.class );
-
-        // When
-        new InternalPath();
-
+        assertThrows( IllegalArgumentException.class, InternalPath::new );
     }
 
     @Test
     public void shouldNotBeAbleToCreatePathWithEvenNumberOfEntities()
     {
-        // Expect
-        thrown.expect( IllegalArgumentException.class );
-
-        // When
-        new InternalPath(
-                new InternalNode( 1 ),
-                new InternalRelationship( 2, 3, 4, "KNOWS" ) );
-
+        assertThrows( IllegalArgumentException.class,
+                () -> new InternalPath(
+                        new InternalNode( 1 ),
+                        new InternalRelationship( 2, 3, 4, "KNOWS" ) ) );
     }
 
     @Test
     public void shouldNotBeAbleToCreatePathWithNullEntities()
     {
-        // Expect
-        thrown.expect( IllegalArgumentException.class );
-
-        // When
         InternalNode nullNode = null;
         //noinspection ConstantConditions
-        new InternalPath( nullNode );
-
+        assertThrows( IllegalArgumentException.class, () -> new InternalPath( nullNode ) );
     }
 
     @Test
     public void shouldNotBeAbleToCreatePathWithNodeThatDoesNotConnect()
     {
-        // Expect
-        thrown.expect( IllegalArgumentException.class );
-
-        // When
-        new InternalPath(
-                new InternalNode( 1 ),
-                new InternalRelationship( 2, 1, 3, "KNOWS" ),
-                new InternalNode( 4 ) );
-
+        assertThrows( IllegalArgumentException.class,
+                () -> new InternalPath(
+                        new InternalNode( 1 ),
+                        new InternalRelationship( 2, 1, 3, "KNOWS" ),
+                        new InternalNode( 4 ) ) );
     }
 
     @Test
     public void shouldNotBeAbleToCreatePathWithRelationshipThatDoesNotConnect()
     {
-        // Expect
-        thrown.expect( IllegalArgumentException.class );
-
-        // When
-        new InternalPath(
-                new InternalNode( 1 ),
-                new InternalRelationship( 2, 3, 4, "KNOWS" ),
-                new InternalNode( 3 ) );
-
+        assertThrows( IllegalArgumentException.class,
+                () -> new InternalPath(
+                        new InternalNode( 1 ),
+                        new InternalRelationship( 2, 3, 4, "KNOWS" ),
+                        new InternalNode( 3 ) ) );
     }
-
 }

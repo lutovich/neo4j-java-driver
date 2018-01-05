@@ -21,7 +21,7 @@ package org.neo4j.driver.v1.types;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,7 +36,7 @@ import org.neo4j.driver.v1.Value;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.neo4j.driver.internal.types.InternalTypeSystem.TYPE_SYSTEM;
 import static org.neo4j.driver.v1.Values.value;
 

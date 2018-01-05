@@ -18,7 +18,7 @@
  */
 package org.neo4j.driver.internal;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.neo4j.driver.internal.retry.FixedRetryLogic;
 import org.neo4j.driver.internal.spi.ConnectionProvider;
@@ -27,7 +27,7 @@ import org.neo4j.driver.v1.Config;
 import org.neo4j.driver.v1.Session;
 
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.neo4j.driver.internal.logging.DevNullLogging.DEV_NULL_LOGGING;
 

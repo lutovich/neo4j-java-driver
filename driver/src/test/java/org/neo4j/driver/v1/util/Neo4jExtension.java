@@ -18,9 +18,9 @@
  */
 package org.neo4j.driver.v1.util;
 
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,36 +42,38 @@ import static org.neo4j.driver.v1.util.Neo4jRunner.getOrCreateGlobalRunner;
 import static org.neo4j.driver.v1.util.Neo4jSettings.DEFAULT_TLS_CERT_PATH;
 import static org.neo4j.driver.v1.util.Neo4jSettings.DEFAULT_TLS_KEY_PATH;
 
-public class TestNeo4j implements TestRule
+public class Neo4jExtension extends SimpleParameterResolver implements BeforeAllCallback, BeforeEachCallback
 {
     public static final String TEST_RESOURCE_FOLDER_PATH = "src/test/resources";
+
     private final Neo4jSettings settings;
     private Neo4jRunner runner;
+    private boolean cleanDbBeforeEach;
 
-    public TestNeo4j()
+    public Neo4jExtension()
     {
         this( Neo4jSettings.TEST_SETTINGS );
     }
 
-    public TestNeo4j( Neo4jSettings settings )
+    public Neo4jExtension( Neo4jSettings settings )
     {
         this.settings = settings;
     }
 
     @Override
-    public Statement apply( final Statement base, final Description description )
+    public void beforeAll( ExtensionContext context ) throws Exception
     {
-        return new Statement()
+        runner = getOrCreateGlobalRunner();
+        runner.ensureRunning( settings );
+    }
+
+    @Override
+    public void beforeEach( ExtensionContext context )
+    {
+        if ( cleanDbBeforeEach )
         {
-            @Override
-            public void evaluate() throws Throwable
-            {
-                runner = getOrCreateGlobalRunner();
-                runner.ensureRunning( settings );
-                TestUtil.cleanDb( driver() );
-                base.evaluate();
-            }
-        };
+            TestUtil.cleanDb( driver() );
+        }
     }
 
     public Driver driver()
@@ -167,5 +169,10 @@ public class TestNeo4j implements TestRule
     public ServerVersion version()
     {
         return ServerVersion.version( driver() );
+    }
+
+    public void setCleanDbBeforeEach( boolean cleanDbBeforeEach )
+    {
+        this.cleanDbBeforeEach = cleanDbBeforeEach;
     }
 }

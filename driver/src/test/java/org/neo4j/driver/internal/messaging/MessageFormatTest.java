@@ -21,9 +21,7 @@ package org.neo4j.driver.internal.messaging;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,8 +40,10 @@ import org.neo4j.driver.v1.exceptions.ClientException;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.driver.internal.async.ChannelAttributes.messageDispatcher;
 import static org.neo4j.driver.internal.async.ChannelAttributes.setMessageDispatcher;
 import static org.neo4j.driver.internal.logging.DevNullLogging.DEV_NULL_LOGGING;
@@ -55,9 +55,6 @@ import static org.neo4j.driver.v1.Values.value;
 public class MessageFormatTest
 {
     public MessageFormat format = new PackStreamMessageFormatV1();
-
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
 
     @Test
     public void shouldPackAllRequests() throws Throwable
@@ -110,7 +107,6 @@ public class MessageFormatTest
     @Test
     public void shouldGiveHelpfulErrorOnMalformedNodeStruct() throws Throwable
     {
-        // Given
         ChunkAwareByteBufOutput output = new ChunkAwareByteBufOutput();
         ByteBuf buf = Unpooled.buffer();
         output.start( buf );
@@ -123,14 +119,11 @@ public class MessageFormatTest
         output.stop();
         BoltProtocolV1Util.writeMessageBoundary( buf );
 
-        // Expect
-        exception.expect( ClientException.class );
-        exception.expectMessage( startsWith(
+        ClientException ex = assertThrows( ClientException.class, () -> unpack( buf, newEmbeddedChannel() ) );
+
+        assertThat( ex.getMessage(), startsWith(
                 "Invalid message received, serialized NODE structures should have 3 fields, " +
                 "received NODE structure has 0 fields." ) );
-
-        // When
-        unpack( buf, newEmbeddedChannel() );
     }
 
     private void assertSerializesValue( Value value ) throws Throwable

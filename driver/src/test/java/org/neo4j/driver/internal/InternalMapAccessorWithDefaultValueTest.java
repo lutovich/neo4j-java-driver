@@ -18,7 +18,7 @@
  */
 package org.neo4j.driver.internal;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +46,7 @@ import org.neo4j.driver.v1.types.Relationship;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.neo4j.driver.v1.Values.ofInteger;
 import static org.neo4j.driver.v1.Values.value;
 

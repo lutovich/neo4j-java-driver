@@ -18,15 +18,15 @@
  */
 package org.neo4j.driver.internal.cluster;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.neo4j.driver.internal.BoltServerAddress;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AddressSetTest
 {

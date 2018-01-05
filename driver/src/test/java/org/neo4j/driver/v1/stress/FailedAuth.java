@@ -27,8 +27,8 @@ import org.neo4j.driver.v1.exceptions.SecurityException;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.driver.v1.AuthTokens.basic;
 
 public class FailedAuth<C extends AbstractContext> implements BlockingCommand<C>

@@ -18,7 +18,8 @@
  */
 package org.neo4j.driver.v1.stress;
 
-import org.junit.Rule;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.net.URI;
 import java.util.Collections;
@@ -27,16 +28,22 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.neo4j.driver.v1.AuthToken;
 import org.neo4j.driver.v1.summary.ResultSummary;
-import org.neo4j.driver.v1.util.TestNeo4j;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 
 import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@ExtendWith( Neo4jExtension.class )
 public class SingleInstanceStressIT extends AbstractStressTestBase<SingleInstanceStressIT.Context>
 {
-    @Rule
-    public final TestNeo4j neo4j = new TestNeo4j();
+    private Neo4jExtension neo4j;
+
+    @BeforeEach
+    void beforeEach( Neo4jExtension neo4jExtension )
+    {
+        neo4j = neo4jExtension;
+    }
 
     @Override
     URI databaseUri()

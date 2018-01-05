@@ -18,7 +18,7 @@
  */
 package org.neo4j.driver.internal.cluster;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,10 +34,10 @@ import org.neo4j.driver.v1.Value;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.driver.internal.cluster.ClusterCompositionUtil.A;
 import static org.neo4j.driver.internal.cluster.ClusterCompositionUtil.B;
 import static org.neo4j.driver.internal.cluster.ClusterCompositionUtil.C;

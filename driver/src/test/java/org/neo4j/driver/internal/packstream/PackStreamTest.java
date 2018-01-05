@@ -18,9 +18,7 @@
  */
 package org.neo4j.driver.internal.packstream;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,15 +37,12 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PackStreamTest
 {
-
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-
     public static Map<String, Object> asMap( Object... keysAndValues )
     {
         Map<String,Object> map = Iterables.newLinkedHashMapWithSize( keysAndValues.length / 2 );
@@ -634,8 +629,7 @@ public class PackStreamTest
         assertStruct( 2439 );
 
         //we cannot have 'too many' fields
-        exception.expect( PackStream.Overflow.class );
-        assertStruct( 65536 );
+        assertThrows( PackStream.Overflow.class, () -> assertStruct( 65536 ) );
     }
 
     @Test
@@ -788,10 +782,7 @@ public class PackStreamTest
         PackStream.Packer packer = machine.packer();
 
         // Expect
-        exception.expect( PackStream.UnPackable.class );
-
-        // When
-        packer.pack( new MyRandomClass() );
+        assertThrows( PackStream.UnPackable.class, () -> packer.pack( new MyRandomClass() ) );
     }
 
     private static class MyRandomClass{}

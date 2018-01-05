@@ -18,8 +18,8 @@
  */
 package org.neo4j.driver.v1.util;
 
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -35,39 +35,31 @@ import org.neo4j.driver.v1.types.TypeSystem;
 
 /**
  * A little utility for integration testing, this provides tests with a session they can work with.
- * If you want more direct control, have a look at {@link TestNeo4j} instead.
+ * If you want more direct control, have a look at {@link Neo4jExtension} instead.
  */
-public class TestNeo4jSession extends TestNeo4j implements Session
+public class Neo4jSessionExtension extends Neo4jExtension implements Session, AfterEachCallback
 {
     private Session realSession;
 
-    public TestNeo4jSession()
+    public Neo4jSessionExtension()
     {
         super();
     }
 
     @Override
-    public Statement apply( final Statement base, Description description )
+    public void beforeEach( ExtensionContext context )
     {
-        return super.apply( new Statement()
+        super.beforeEach( context );
+        realSession = driver().session();
+    }
+
+    @Override
+    public void afterEach( ExtensionContext context )
+    {
+        if ( realSession != null )
         {
-            @Override
-            public void evaluate() throws Throwable
-            {
-                try
-                {
-                    realSession = driver().session();
-                    base.evaluate();
-                }
-                finally
-                {
-                    if ( realSession != null )
-                    {
-                        realSession.close();
-                    }
-                }
-            }
-        }, description );
+            realSession.close();
+        }
     }
 
     @Override

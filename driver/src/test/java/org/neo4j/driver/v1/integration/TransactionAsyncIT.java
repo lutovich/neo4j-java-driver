@@ -18,12 +18,10 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,7 +48,7 @@ import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 import org.neo4j.driver.v1.summary.ResultSummary;
 import org.neo4j.driver.v1.summary.StatementType;
 import org.neo4j.driver.v1.types.Node;
-import org.neo4j.driver.v1.util.TestNeo4j;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.Matchers.containsString;
@@ -58,15 +56,15 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.neo4j.driver.internal.util.Iterables.single;
 import static org.neo4j.driver.internal.util.Matchers.blockingOperationInEventLoopError;
 import static org.neo4j.driver.internal.util.Matchers.containsResultAvailableAfterAndResultConsumedAfter;
@@ -75,22 +73,20 @@ import static org.neo4j.driver.internal.util.ServerVersion.v3_1_0;
 import static org.neo4j.driver.v1.Values.parameters;
 import static org.neo4j.driver.v1.util.TestUtil.await;
 
+@ExtendWith( Neo4jExtension.class )
 public class TransactionAsyncIT
 {
-    private final TestNeo4j neo4j = new TestNeo4j();
-
-    @Rule
-    public final RuleChain ruleChain = RuleChain.outerRule( Timeout.seconds( 180 ) ).around( neo4j );
-
+    private Neo4jExtension neo4j;
     private Session session;
 
-    @Before
-    public void setUp()
+    @BeforeEach
+    void setUp( Neo4jExtension neo4jExtension )
     {
+        neo4j = neo4jExtension;
         session = neo4j.driver().session();
     }
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         session.closeAsync();
@@ -1333,7 +1329,7 @@ public class TransactionAsyncIT
 
     private void assumeDatabaseSupportsBookmarks()
     {
-        assumeTrue( "Neo4j " + neo4j.version() + " does not support bookmarks",
-                neo4j.version().greaterThanOrEqual( v3_1_0 ) );
+        assumeTrue( neo4j.version().greaterThanOrEqual( v3_1_0 ),
+                "Neo4j " + neo4j.version() + " does not support bookmarks" );
     }
 }

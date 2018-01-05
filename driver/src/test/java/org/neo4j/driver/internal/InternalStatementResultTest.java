@@ -18,9 +18,7 @@
  */
 package org.neo4j.driver.internal;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,12 +44,12 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.neo4j.driver.internal.BoltServerAddress.LOCAL_DEFAULT;
@@ -61,9 +59,6 @@ import static org.neo4j.driver.v1.Values.value;
 
 public class InternalStatementResultTest
 {
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     @Test
     public void iterationShouldWorksAsExpected()
     {
@@ -83,10 +78,7 @@ public class InternalStatementResultTest
         assertThat( values( result.next() ), equalTo( asList( value( "v1-3" ), value( "v2-3" ) ) ) );
         assertFalse( result.hasNext() );
 
-        expectedException.expect( NoSuchRecordException.class );
-
-        // WHEN
-        assertNull( result.next() );
+        assertThrows( NoSuchRecordException.class, result::next );
     }
 
     @Test
@@ -119,12 +111,8 @@ public class InternalStatementResultTest
         result.next();
         result.next();
 
-
         // THEN
-        expectedException.expect( NoSuchRecordException.class );
-
-        // THEN
-        result.single();
+        assertThrows( NoSuchRecordException.class, result::single );
     }
 
     @Test
@@ -135,10 +123,7 @@ public class InternalStatementResultTest
 
 
         // THEN
-        expectedException.expect( NoSuchRecordException.class );
-
-        // THEN
-        result.single();
+        assertThrows( NoSuchRecordException.class, result::single );
     }
 
     @Test
@@ -149,10 +134,7 @@ public class InternalStatementResultTest
 
 
         // THEN
-        expectedException.expect( NoSuchRecordException.class );
-
-        // THEN
-        result.single();
+        assertThrows( NoSuchRecordException.class, result::single );
     }
 
     @Test
@@ -186,33 +168,24 @@ public class InternalStatementResultTest
     @Test
     public void singleShouldThrowOnBigResult()
     {
-        // Expect
-        expectedException.expect( NoSuchRecordException.class );
-
-        // When
-        createResult( 42 ).single();
+        StatementResult result = createResult( 42 );
+        assertThrows( NoSuchRecordException.class, result::single );
     }
 
     @Test
     public void singleShouldThrowOnEmptyResult()
     {
-        // Expect
-        expectedException.expect( NoSuchRecordException.class );
-
-        // When
-        createResult( 0 ).single();
+        StatementResult result = createResult( 0 );
+        assertThrows( NoSuchRecordException.class, result::single );
     }
 
     @Test
     public void singleShouldThrowOnConsumedResult()
     {
-        // Expect
-        expectedException.expect( NoSuchRecordException.class );
-
-        // When
         StatementResult result = createResult( 2 );
         result.consume();
-        result.single();
+
+        assertThrows( NoSuchRecordException.class, result::single );
     }
 
     @Test
@@ -371,10 +344,7 @@ public class InternalStatementResultTest
         result.next();
 
         // THEN
-        expectedException.expect( NoSuchRecordException.class );
-
-        // WHEN
-        result.peek();
+        assertThrows( NoSuchRecordException.class, result::peek );
     }
 
     @Test
@@ -384,10 +354,7 @@ public class InternalStatementResultTest
         StatementResult result = createResult( 0 );
 
         // THEN
-        expectedException.expect( NoSuchRecordException.class );
-
-        // WHEN
-        Record future = result.peek();
+        assertThrows( NoSuchRecordException.class, result::peek );
     }
 
     private StatementResult createResult( int numberOfRecords )

@@ -22,10 +22,10 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.util.concurrent.ImmediateEventExecutor;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,17 +40,17 @@ import org.neo4j.driver.internal.security.SecurityPlan;
 import org.neo4j.driver.internal.spi.Connection;
 import org.neo4j.driver.internal.util.FakeClock;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
-import org.neo4j.driver.v1.util.TestNeo4j;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -61,24 +61,24 @@ import static org.neo4j.driver.internal.BoltServerAddress.LOCAL_DEFAULT;
 import static org.neo4j.driver.internal.logging.DevNullLogging.DEV_NULL_LOGGING;
 import static org.neo4j.driver.v1.util.TestUtil.await;
 
+@ExtendWith( Neo4jExtension.class )
 public class ConnectionPoolImplTest
 {
     private static final BoltServerAddress ADDRESS_1 = new BoltServerAddress( "server:1" );
     private static final BoltServerAddress ADDRESS_2 = new BoltServerAddress( "server:2" );
     private static final BoltServerAddress ADDRESS_3 = new BoltServerAddress( "server:3" );
 
-    @Rule
-    public final TestNeo4j neo4j = new TestNeo4j();
-
+    private Neo4jExtension neo4j;
     private ConnectionPoolImpl pool;
 
-    @Before
-    public void setUp() throws Exception
+    @BeforeEach
+    public void setUp( Neo4jExtension neo4jExtension ) throws Exception
     {
+        neo4j = neo4jExtension;
         pool = newPool();
     }
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         pool.close();

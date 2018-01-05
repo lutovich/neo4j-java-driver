@@ -23,10 +23,10 @@ import io.netty.channel.Channel;
 import io.netty.channel.pool.ChannelHealthChecker;
 import io.netty.channel.pool.ChannelPoolHandler;
 import io.netty.util.concurrent.Future;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,15 +44,15 @@ import org.neo4j.driver.v1.AuthToken;
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.exceptions.AuthenticationException;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 import org.neo4j.driver.v1.util.Neo4jRunner;
-import org.neo4j.driver.v1.util.TestNeo4j;
 
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -60,23 +60,23 @@ import static org.mockito.Mockito.verify;
 import static org.neo4j.driver.internal.logging.DevNullLogging.DEV_NULL_LOGGING;
 import static org.neo4j.driver.v1.Values.value;
 
+@ExtendWith( Neo4jExtension.class )
 public class NettyChannelPoolTest
 {
-    @Rule
-    public final TestNeo4j neo4j = new TestNeo4j();
-
+    private Neo4jExtension neo4j;
     private Bootstrap bootstrap;
     private ChannelPoolHandler poolHandler;
     private NettyChannelPool pool;
 
-    @Before
-    public void setUp()
+    @BeforeEach
+    public void setUp( Neo4jExtension neo4jExtension )
     {
+        neo4j = neo4jExtension;
         bootstrap = BootstrapFactory.newBootstrap( 1 );
         poolHandler = mock( ChannelPoolHandler.class );
     }
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         if ( pool != null )

@@ -18,7 +18,7 @@
  */
 package org.neo4j.driver.internal.summary;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,10 +27,10 @@ import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.summary.Plan;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.neo4j.driver.v1.Values.ofValue;
 import static org.neo4j.driver.v1.Values.parameters;
 import static org.neo4j.driver.v1.Values.value;
-import static org.neo4j.driver.v1.Values.ofValue;
 import static org.neo4j.driver.v1.Values.values;
 
 @SuppressWarnings("unchecked")

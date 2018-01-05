@@ -18,7 +18,7 @@
  */
 package org.neo4j.driver.internal.cluster;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.net.UnknownHostException;
 import java.util.Set;
@@ -27,7 +27,7 @@ import org.neo4j.driver.internal.BoltServerAddress;
 import org.neo4j.driver.v1.Logger;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;

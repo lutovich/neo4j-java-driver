@@ -18,15 +18,12 @@
  */
 package org.neo4j.driver.v1.stress;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,59 +36,35 @@ import org.neo4j.driver.v1.Config;
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
-import org.neo4j.driver.v1.util.TestNeo4j;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.driver.v1.GraphDatabase.driver;
 import static org.neo4j.driver.v1.util.DaemonThreadFactory.daemon;
 
+@ExtendWith( Neo4jExtension.class )
 public class SessionPoolingStressIT
 {
-    @Rule
-    public final TestNeo4j neo4j = new TestNeo4j();
-
-    @Rule
-    public final TestWatcher testWatcher = new TestWatcher()
-    {
-        @Override
-        protected void failed( Throwable e, Description description )
-        {
-            super.failed( e, description );
-
-            StringBuilder sb = new StringBuilder();
-            Map<Thread,StackTraceElement[]> allStackTraces = Thread.getAllStackTraces();
-            for ( Map.Entry<Thread,StackTraceElement[]> entry : allStackTraces.entrySet() )
-            {
-                Thread thread = entry.getKey();
-                sb.append( thread ).append( " -- " ).append( thread.getState() ).append( System.lineSeparator() );
-                for ( StackTraceElement element : entry.getValue() )
-                {
-                    sb.append( "    " ).append( element ).append( System.lineSeparator() );
-                }
-            }
-
-            System.out.println( sb.toString() );
-        }
-    };
-
     private static final int N_THREADS = 50;
     private static final int TEST_TIME = 10000;
 
     private static final List<String> QUERIES = asList(
             "RETURN 1295 + 42", "UNWIND range(1,10000) AS x CREATE (n {prop:x}) DELETE n " );
 
+    private Neo4jExtension neo4j;
     private Driver driver;
     private ExecutorService executor;
 
-    @Before
-    public void setUp() throws Exception
+    @BeforeEach
+    public void setUp( Neo4jExtension neo4jExtension )
     {
+        neo4j = neo4jExtension;
         executor = Executors.newFixedThreadPool( N_THREADS, daemon( getClass().getSimpleName() + "-thread-" ) );
     }
 
-    @After
-    public void tearDown() throws Exception
+    @AfterEach
+    public void tearDown()
     {
         if ( executor != null )
         {

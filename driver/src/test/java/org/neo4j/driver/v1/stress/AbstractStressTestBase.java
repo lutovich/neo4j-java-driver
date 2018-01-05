@@ -19,9 +19,9 @@
 package org.neo4j.driver.v1.stress;
 
 import io.netty.util.internal.ConcurrentSet;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -63,16 +63,16 @@ import org.neo4j.driver.v1.util.DaemonThreadFactory;
 
 import static java.util.Collections.nCopies;
 import static java.util.Collections.singletonMap;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.neo4j.driver.internal.util.Futures.completedWithNull;
 
 public abstract class AbstractStressTestBase<C extends AbstractContext>
 {
@@ -89,7 +89,7 @@ public abstract class AbstractStressTestBase<C extends AbstractContext>
 
     Driver driver;
 
-    @Before
+    @BeforeEach
     public void setUp()
     {
         logging = new LoggerNameTrackingLogging();
@@ -106,7 +106,7 @@ public abstract class AbstractStressTestBase<C extends AbstractContext>
         executor = Executors.newCachedThreadPool( threadFactory );
     }
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         executor.shutdownNow();
@@ -361,7 +361,7 @@ public abstract class AbstractStressTestBase<C extends AbstractContext>
             assertEquals( 1, records.size() );
             Record record = records.get( 0 );
             long actualCount = record.get( "nodesCount" ).asLong();
-            assertEquals( "Unexpected number of nodes in the database", expectedCount, actualCount );
+            assertEquals( expectedCount, actualCount, "Unexpected number of nodes in the database" );
         }
     }
 
@@ -469,7 +469,7 @@ public abstract class AbstractStressTestBase<C extends AbstractContext>
         long start = System.nanoTime();
 
         Session session = driver.session();
-        CompletableFuture<Throwable> writeTransactions = completedFuture( null );
+        CompletableFuture<Throwable> writeTransactions = completedWithNull();
 
         for ( int i = 0; i < batchCount; i++ )
         {
@@ -482,7 +482,7 @@ public abstract class AbstractStressTestBase<C extends AbstractContext>
                     int nodeIndex = batchIndex * batchSize + j;
                     createNodeInTx( tx, true, nodeIndex );
                 }
-                return completedFuture( null );
+                return completedWithNull();
             } ) );
         }
         writeTransactions = writeTransactions.exceptionally( error -> error )

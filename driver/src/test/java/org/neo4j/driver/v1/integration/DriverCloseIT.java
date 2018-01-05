@@ -18,12 +18,11 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 import java.util.logging.Level;
@@ -35,16 +34,15 @@ import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 import org.neo4j.driver.v1.util.StubServer;
-import org.neo4j.driver.v1.util.TestNeo4j;
 
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.driver.v1.util.Neo4jRunner.DEFAULT_AUTH_TOKEN;
 
-@RunWith( Enclosed.class )
 public class DriverCloseIT
 {
     public abstract static class DriverCloseITBase
@@ -116,10 +114,17 @@ public class DriverCloseIT
         }
     }
 
-    public static class DirectDriverCloseIT extends DriverCloseITBase
+    @Nested
+    @ExtendWith( Neo4jExtension.class )
+    public class DirectDriverCloseIT extends DriverCloseITBase
     {
-        @ClassRule
-        public static TestNeo4j neo4j = new TestNeo4j();
+        private Neo4jExtension neo4j;
+
+        @BeforeEach
+        public void beforeEach( Neo4jExtension neo4jExtension )
+        {
+            neo4j = neo4jExtension;
+        }
 
         @Override
         protected Driver createDriver()
@@ -147,17 +152,18 @@ public class DriverCloseIT
         }
     }
 
-    public static class RoutingDriverCloseIT extends DriverCloseITBase
+    @Nested
+    public class RoutingDriverCloseIT extends DriverCloseITBase
     {
         private StubServer router;
 
-        @Before
-        public void setUp() throws Exception
+        @BeforeEach
+        public void beforeEach() throws Exception
         {
             router = StubServer.start( "acquire_endpoints.script", 9001 );
         }
 
-        @After
+        @AfterEach
         public void tearDown() throws Exception
         {
             if ( router != null )

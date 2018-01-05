@@ -37,13 +37,13 @@ import org.neo4j.driver.internal.value.NullValue;
 import org.neo4j.driver.internal.value.PathValue;
 import org.neo4j.driver.internal.value.RelationshipValue;
 import org.neo4j.driver.internal.value.StringValue;
-import org.neo4j.driver.v1.types.Entity;
-import org.neo4j.driver.v1.types.Path;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.Values;
+import org.neo4j.driver.v1.types.Entity;
+import org.neo4j.driver.v1.types.Path;
 
 import static java.lang.String.format;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.neo4j.driver.internal.types.InternalTypeSystem.TYPE_SYSTEM;
 import static org.neo4j.driver.v1.Values.ofValue;
 import static org.neo4j.driver.v1.tck.tck.util.Types.Type;

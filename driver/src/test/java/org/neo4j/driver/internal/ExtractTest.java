@@ -18,9 +18,7 @@
  */
 package org.neo4j.driver.internal;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,23 +40,20 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.neo4j.driver.v1.Values.value;
 
 public class ExtractTest
 {
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-
     @Test
     public void extractEmptyArrayShouldNotBeModifiable() throws Exception
     {
         List<Value> list = Extract.list( new Value[]{} );
 
         assertThat( list, empty() );
-        exception.expect( UnsupportedOperationException.class );
-        list.add( null );
+        assertThrows( UnsupportedOperationException.class, () -> list.add( null ) );
     }
 
     @Test
@@ -67,8 +62,7 @@ public class ExtractTest
         List<Value> list = Extract.list( new Value[]{value( 42 )} );
 
         assertThat( list, equalTo( singletonList( value( 42 ) ) ) );
-        exception.expect( UnsupportedOperationException.class );
-        list.add( null );
+        assertThrows( UnsupportedOperationException.class, () -> list.add( null ) );
     }
 
     @Test
@@ -77,8 +71,7 @@ public class ExtractTest
         List<Value> list = Extract.list( new Value[]{value( 42 ), value( 43 )} );
 
         assertThat( list, equalTo( asList( value( 42 ), value( 43 ) ) ) );
-        exception.expect( UnsupportedOperationException.class );
-        list.add( null );
+        assertThrows( UnsupportedOperationException.class, () -> list.add( null ) );
     }
 
     @Test
@@ -101,8 +94,7 @@ public class ExtractTest
         Map<String,Value> valueMap = Extract.map( map );
 
         // THEN
-        exception.expect( UnsupportedOperationException.class );
-        valueMap.put( "foo", value( "bar" ) );
+        assertThrows( UnsupportedOperationException.class, () -> valueMap.put( "foo", value( "bar" ) ) );
     }
 
     @Test

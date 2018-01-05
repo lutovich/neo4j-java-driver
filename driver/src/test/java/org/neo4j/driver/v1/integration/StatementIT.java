@@ -18,8 +18,9 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -27,20 +28,27 @@ import java.util.List;
 import java.util.Map;
 
 import org.neo4j.driver.v1.Record;
+import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.Values;
-import org.neo4j.driver.v1.util.TestNeo4jSession;
+import org.neo4j.driver.v1.util.Neo4jSessionExtension;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.neo4j.driver.v1.Values.parameters;
 
+@ExtendWith( Neo4jSessionExtension.class )
 public class StatementIT
 {
-    @Rule
-    public TestNeo4jSession session = new TestNeo4jSession();
+    private Session session;
+
+    @BeforeEach
+    public void setUp( Neo4jSessionExtension sessionExtension )
+    {
+        session = sessionExtension;
+    }
 
     @Test
     public void shouldRunWithResult() throws Throwable

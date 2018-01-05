@@ -18,7 +18,7 @@
  */
 package org.neo4j.driver.internal.async;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import org.neo4j.driver.internal.RoutingErrorHandler;
@@ -28,7 +28,7 @@ import org.neo4j.driver.internal.spi.ResponseHandler;
 
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;

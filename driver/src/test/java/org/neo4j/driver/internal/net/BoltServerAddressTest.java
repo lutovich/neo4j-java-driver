@@ -18,16 +18,16 @@
  */
 package org.neo4j.driver.internal.net;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.net.SocketAddress;
 
 import org.neo4j.driver.internal.BoltServerAddress;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.neo4j.driver.internal.BoltServerAddress.DEFAULT_PORT;
 
 public class BoltServerAddressTest

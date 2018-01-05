@@ -20,9 +20,9 @@ package org.neo4j.driver.internal.async.pool;
 
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.util.concurrent.Future;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
@@ -32,9 +32,9 @@ import org.neo4j.driver.internal.util.Clock;
 import org.neo4j.driver.v1.Value;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.neo4j.driver.internal.async.ChannelAttributes.setCreationTimestamp;
 import static org.neo4j.driver.internal.async.ChannelAttributes.setLastUsedTimestamp;
 import static org.neo4j.driver.internal.async.ChannelAttributes.setMessageDispatcher;
@@ -51,13 +51,13 @@ public class NettyChannelHealthCheckerTest
     private final EmbeddedChannel channel = new EmbeddedChannel();
     private final InboundMessageDispatcher dispatcher = new InboundMessageDispatcher( channel, DEV_NULL_LOGGING );
 
-    @Before
+    @BeforeEach
     public void setUp()
     {
         setMessageDispatcher( channel, dispatcher );
     }
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         channel.finishAndReleaseAll();

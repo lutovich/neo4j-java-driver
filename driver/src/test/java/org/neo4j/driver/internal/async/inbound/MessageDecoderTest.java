@@ -19,20 +19,20 @@
 package org.neo4j.driver.internal.async.inbound;
 
 import io.netty.channel.embedded.EmbeddedChannel;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import static io.netty.buffer.Unpooled.wrappedBuffer;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.driver.v1.util.TestUtil.assertByteBufEquals;
 
 public class MessageDecoderTest
 {
     private final EmbeddedChannel channel = new EmbeddedChannel( new MessageDecoder() );
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         channel.finishAndReleaseAll();

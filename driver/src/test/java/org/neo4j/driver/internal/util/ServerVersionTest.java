@@ -18,12 +18,12 @@
  */
 package org.neo4j.driver.internal.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ServerVersionTest
 {
@@ -36,11 +36,10 @@ public class ServerVersionTest
         assertThat( ServerVersion.version( "Neo4j/3.2.0" ), is( ServerVersion.v3_2_0 ) );
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void versionShouldThrowExceptionIfServerVersionCantBeParsed() throws Exception
+    @Test
+    public void versionShouldThrowExceptionIfServerVersionCantBeParsed()
     {
-        ServerVersion.version( "" );
-        fail( "Should have failed to parse version" );
+        assertThrows( IllegalArgumentException.class, () -> ServerVersion.version( "" ) );
     }
 
     @Test

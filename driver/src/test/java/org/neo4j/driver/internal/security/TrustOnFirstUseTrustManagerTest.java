@@ -18,15 +18,15 @@
  */
 package org.neo4j.driver.internal.security;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Scanner;
@@ -35,10 +35,10 @@ import org.neo4j.driver.internal.BoltServerAddress;
 import org.neo4j.driver.v1.Logger;
 
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -53,15 +53,13 @@ public class TrustOnFirstUseTrustManagerTest
     private int knownServerPort;
     private String knownServer;
 
-    @Rule
-    public TemporaryFolder testDir = new TemporaryFolder( new File( "target" ) );
     private X509Certificate knownCertificate;
 
-    @Before
+    @BeforeEach
     public void setup() throws Throwable
     {
         // create the cert file with one ip:port and some random "cert" in it
-        knownCertsFile = testDir.newFile();
+        knownCertsFile = Files.createTempFile( Paths.get( "target" ), "known-certificates", ".txt" ).toFile();
         knownServerIp = "1.2.3.4";
         knownServerPort = 100;
         knownServer = knownServerIp + ":" + knownServerPort;
@@ -76,7 +74,7 @@ public class TrustOnFirstUseTrustManagerTest
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    @After
+    @AfterEach
     public void teardown()
     {
         knownCertsFile.delete();

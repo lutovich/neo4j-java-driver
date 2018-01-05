@@ -18,23 +18,23 @@
  */
 package org.neo4j.driver.internal.logging;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Scanner;
 import java.util.logging.Level;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import org.neo4j.driver.internal.logging.ConsoleLogging.ConsoleLogger;
 import org.neo4j.driver.v1.Logger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ConsoleLoggingTest
 {
@@ -42,20 +42,20 @@ public class ConsoleLoggingTest
     private static ByteArrayOutputStream out = new ByteArrayOutputStream();
     private static PrintStream sysErr;
 
-    @BeforeClass
+    @BeforeAll
     public static void saveSysOut()
     {
         sysErr = System.err;
         System.setErr( new PrintStream( out ) );
     }
 
-    @AfterClass
+    @AfterAll
     public static void restoreSysOut()
     {
         System.setErr( sysErr );
     }
 
-    @Before
+    @BeforeEach
     public void setup()
     {
         out.reset();

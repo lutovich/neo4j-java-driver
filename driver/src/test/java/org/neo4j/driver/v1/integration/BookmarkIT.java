@@ -18,10 +18,9 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.HashSet;
 
@@ -34,48 +33,44 @@ import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.exceptions.ClientException;
 import org.neo4j.driver.v1.exceptions.TransientException;
-import org.neo4j.driver.v1.util.TestNeo4jSession;
+import org.neo4j.driver.v1.util.Neo4jSessionExtension;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.neo4j.driver.internal.util.ServerVersion.v3_1_0;
 import static org.neo4j.driver.v1.util.Neo4jRunner.DEFAULT_AUTH_TOKEN;
 
+@ExtendWith( Neo4jSessionExtension.class )
 public class BookmarkIT
 {
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-    @Rule
-    public TestNeo4jSession sessionRule = new TestNeo4jSession();
-
     private Driver driver;
     private Session session;
 
-    @Before
-    public void assumeBookmarkSupport()
+    @BeforeEach
+    public void assumeBookmarkSupport( Neo4jSessionExtension sessionExtension )
     {
-        driver = sessionRule.driver();
-        session = sessionRule;
+        driver = sessionExtension.driver();
+        session = sessionExtension;
 
         ServerVersion serverVersion = ServerVersion.version( driver );
-        assumeTrue( "Server version `" + serverVersion + "` does not support bookmark",
-                serverVersion.greaterThanOrEqual( v3_1_0 ) );
+        assumeTrue( serverVersion.greaterThanOrEqual( v3_1_0 ),
+                "Server version `" + serverVersion + "` does not support bookmark" );
     }
 
     @Test
     public void shouldConnectIPv6Uri()
     {
         // Given
-        try(Driver driver =  GraphDatabase.driver( "bolt://[::1]:7687", DEFAULT_AUTH_TOKEN );
-            Session session = driver.session() )
+        try ( Driver driver = GraphDatabase.driver( "bolt://[::1]:7687", DEFAULT_AUTH_TOKEN );
+              Session session = driver.session() )
         {
             // When
             StatementResult result = session.run( "RETURN 1" );

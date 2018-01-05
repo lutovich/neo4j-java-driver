@@ -18,7 +18,7 @@
  */
 package org.neo4j.driver.internal.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -32,10 +32,10 @@ import org.neo4j.driver.v1.exceptions.TransientException;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.driver.internal.util.ErrorUtil.isFatal;
 import static org.neo4j.driver.internal.util.ErrorUtil.newConnectionTerminatedError;
 import static org.neo4j.driver.internal.util.ErrorUtil.newNeo4jError;

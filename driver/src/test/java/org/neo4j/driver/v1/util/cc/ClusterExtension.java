@@ -18,7 +18,11 @@
  */
 package org.neo4j.driver.v1.util.cc;
 
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -28,12 +32,14 @@ import org.neo4j.driver.internal.util.ServerVersion;
 import org.neo4j.driver.v1.AuthToken;
 import org.neo4j.driver.v1.AuthTokens;
 import org.neo4j.driver.v1.util.Neo4jRunner;
+import org.neo4j.driver.v1.util.SimpleParameterResolver;
 
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.neo4j.driver.v1.util.Neo4jRunner.TARGET_DIR;
 import static org.neo4j.driver.v1.util.cc.CommandLineUtil.boltKitAvailable;
 
-public class ClusterRule extends ExternalResource
+public class ClusterExtension extends SimpleParameterResolver
+        implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback
 {
     private static final Path CLUSTER_DIR = Paths.get( TARGET_DIR, "test-cluster" ).toAbsolutePath();
     private static final String PASSWORD = "test";
@@ -43,35 +49,10 @@ public class ClusterRule extends ExternalResource
     private static final int CORE_COUNT = 3;
     private static final int READ_REPLICA_COUNT = 2;
 
-    public Cluster getCluster()
-    {
-        return SharedCluster.get();
-    }
-
-    public AuthToken getDefaultAuthToken()
-    {
-        return AuthTokens.basic( "neo4j", PASSWORD );
-    }
-
-    public static void stopSharedCluster()
-    {
-        if ( SharedCluster.exists() )
-        {
-            try
-            {
-                SharedCluster.stop();
-            }
-            finally
-            {
-                SharedCluster.remove();
-            }
-        }
-    }
-
     @Override
-    protected void before() throws Throwable
+    public void beforeAll( ExtensionContext context ) throws Exception
     {
-        assumeTrue( "BoltKit cluster support unavailable", boltKitAvailable() );
+        assumeTrue( boltKitAvailable(), "BoltKit cluster support unavailable" );
 
         stopSingleInstanceDatabase();
 
@@ -105,16 +86,49 @@ public class ClusterRule extends ExternalResource
                 addShutdownHookToStopCluster();
             }
         }
+    }
 
+    @Override
+    public void afterAll( ExtensionContext context )
+    {
+        stopSharedCluster();
+    }
+
+    @Override
+    public void beforeEach( ExtensionContext context )
+    {
         getCluster().deleteData();
     }
 
     @Override
-    protected void after()
+    public void afterEach( ExtensionContext context )
     {
-        Cluster cluster = getCluster();
-        cluster.startOfflineMembers();
-        cluster.deleteData();
+        getCluster().startOfflineMembers();
+    }
+
+    public Cluster getCluster()
+    {
+        return SharedCluster.get();
+    }
+
+    public AuthToken getDefaultAuthToken()
+    {
+        return AuthTokens.basic( "neo4j", PASSWORD );
+    }
+
+    private static void stopSharedCluster()
+    {
+        if ( SharedCluster.exists() )
+        {
+            try
+            {
+                SharedCluster.stop();
+            }
+            finally
+            {
+                SharedCluster.remove();
+            }
+        }
     }
 
     private static String parseNeo4jVersion()
@@ -122,8 +136,8 @@ public class ClusterRule extends ExternalResource
         String[] split = Neo4jRunner.NEOCTRL_ARGS.split( "\\s+" );
         String version = split[split.length - 1];
         // if the server version is older than 3.1 series, then ignore the tests
-        assumeTrue( "Server version `" + version + "` does not support Casual Cluster",
-                ServerVersion.version( version ).greaterThanOrEqual( ServerVersion.v3_1_0 ) );
+        assumeTrue( ServerVersion.version( version ).greaterThanOrEqual( ServerVersion.v3_1_0 ),
+                "Server version `" + version + "` does not support Casual Cluster" );
         return version;
     }
 

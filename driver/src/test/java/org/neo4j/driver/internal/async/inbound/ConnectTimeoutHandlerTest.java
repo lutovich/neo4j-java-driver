@@ -19,19 +19,19 @@
 package org.neo4j.driver.internal.async.inbound;
 
 import io.netty.channel.embedded.EmbeddedChannel;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class ConnectTimeoutHandlerTest
 {
     private final EmbeddedChannel channel = new EmbeddedChannel();
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         channel.finishAndReleaseAll();

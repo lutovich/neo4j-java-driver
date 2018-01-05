@@ -18,16 +18,15 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.neo4j.driver.internal.DriverFactory;
 import org.neo4j.driver.internal.cluster.RoutingSettings;
@@ -41,10 +40,10 @@ import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
-import org.neo4j.driver.v1.util.TestNeo4j;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.driver.v1.util.Neo4jRunner.DEFAULT_AUTH_TOKEN;
 import static org.neo4j.driver.v1.util.Neo4jRunner.DEFAULT_URI;
 
@@ -52,29 +51,28 @@ import static org.neo4j.driver.v1.util.Neo4jRunner.DEFAULT_URI;
  * Mainly concerned about the connection pool - we want to make sure that bad connections are evacuated from the
  * pool properly if the server dies, or all connections are lost for some other reason.
  */
-@RunWith(Parameterized.class)
+@ExtendWith( Neo4jExtension.class )
 public class ServerKilledIT
 {
-    @Rule
-    public TestNeo4j neo4j = new TestNeo4j();
+    private Neo4jExtension neo4j;
 
-    @Parameters(name = "{0} connections")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-                { "plaintext", Config.build().withoutEncryption() },
-                { "tls encrypted", Config.build().withEncryption() }
-        });
-    }
-
-    private Config.ConfigBuilder config;
-
-    public ServerKilledIT( String testName, Config.ConfigBuilder config )
+    @BeforeEach
+    void setUp( Neo4jExtension neo4jExtension )
     {
-        this.config = config;
+        neo4j = neo4jExtension;
     }
 
-    @Test
-    public void shouldRecoverFromServerRestart() throws Throwable
+    static Stream<Arguments> configsToTest()
+    {
+        return Stream.of(
+                Arguments.of( "plaintext", Config.build().withoutEncryption() ),
+                Arguments.of( "tls encrypted", Config.build().withEncryption() )
+        );
+    }
+
+    @ParameterizedTest( name = "{0} connections" )
+    @MethodSource( "configsToTest" )
+    public void shouldRecoverFromServerRestart( String testName, Config.ConfigBuilder config )
     {
         // Given config with sessionLivenessCheckTimeout not set, i.e. turned off
         try ( Driver driver = GraphDatabase.driver( DEFAULT_URI, DEFAULT_AUTH_TOKEN, config.toConfig() ) )
@@ -104,8 +102,9 @@ public class ServerKilledIT
         }
     }
 
-    @Test
-    public void shouldDropBrokenOldSessions() throws Throwable
+    @ParameterizedTest( name = "{0} connections" )
+    @MethodSource( "configsToTest" )
+    public void shouldDropBrokenOldSessions( String testName, Config.ConfigBuilder config )
     {
         // config with set liveness check timeout
         int livenessCheckTimeoutMinutes = 10;

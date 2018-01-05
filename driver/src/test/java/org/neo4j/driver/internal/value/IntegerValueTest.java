@@ -18,27 +18,23 @@
  */
 package org.neo4j.driver.internal.value;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import org.neo4j.driver.internal.types.InternalTypeSystem;
 import org.neo4j.driver.internal.types.TypeConstructor;
-import org.neo4j.driver.v1.types.TypeSystem;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.exceptions.value.LossyCoercion;
+import org.neo4j.driver.v1.types.TypeSystem;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class IntegerValueTest
 {
     TypeSystem typeSystem = InternalTypeSystem.TYPE_SYSTEM;
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-
 
     @Test
     public void testZeroIntegerValue() throws Exception
@@ -120,8 +116,8 @@ public class IntegerValueTest
         IntegerValue value2 = new IntegerValue( Integer.MAX_VALUE + 1L);
 
         assertThat(value1.asInt(), equalTo(Integer.MAX_VALUE));
-        exception.expect( LossyCoercion.class );
-        value2.asInt();
+
+        assertThrows( LossyCoercion.class, value2::asInt );
     }
 
     @Test
@@ -131,8 +127,7 @@ public class IntegerValueTest
         IntegerValue value2 = new IntegerValue( Integer.MIN_VALUE - 1L );
 
         assertThat(value1.asInt(), equalTo(Integer.MIN_VALUE));
-        exception.expect( LossyCoercion.class );
-        value2.asInt();
+        assertThrows( LossyCoercion.class, value2::asInt );
     }
 
     @Test
@@ -142,7 +137,6 @@ public class IntegerValueTest
         IntegerValue value2 = new IntegerValue(9007199254740993L );
 
         assertThat(value1.asDouble(), equalTo(9007199254740992D));
-        exception.expect( LossyCoercion.class );
-        value2.asDouble();
+        assertThrows( LossyCoercion.class, value2::asDouble );
     }
 }

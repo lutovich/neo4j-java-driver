@@ -18,12 +18,10 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,7 +55,7 @@ import org.neo4j.driver.v1.exceptions.TransientException;
 import org.neo4j.driver.v1.summary.ResultSummary;
 import org.neo4j.driver.v1.summary.StatementType;
 import org.neo4j.driver.v1.types.Node;
-import org.neo4j.driver.v1.util.TestNeo4j;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 
 import static java.util.Collections.emptyIterator;
 import static java.util.Collections.emptyList;
@@ -67,14 +65,15 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.neo4j.driver.internal.util.Futures.completedWithNull;
 import static org.neo4j.driver.internal.util.Futures.failedFuture;
 import static org.neo4j.driver.internal.util.Iterables.single;
 import static org.neo4j.driver.internal.util.Matchers.arithmeticError;
@@ -86,22 +85,20 @@ import static org.neo4j.driver.v1.Values.parameters;
 import static org.neo4j.driver.v1.util.TestUtil.await;
 import static org.neo4j.driver.v1.util.TestUtil.awaitAll;
 
+@ExtendWith( Neo4jExtension.class )
 public class SessionAsyncIT
 {
-    private final TestNeo4j neo4j = new TestNeo4j();
-
-    @Rule
-    public final RuleChain ruleChain = RuleChain.outerRule( Timeout.seconds( 180 ) ).around( neo4j );
-
+    private Neo4jExtension neo4j;
     private Session session;
 
-    @Before
-    public void setUp()
+    @BeforeEach
+    public void setUp( Neo4jExtension neo4jExtension )
     {
+        neo4j = neo4jExtension;
         session = neo4j.driver().session();
     }
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         session.closeAsync();
@@ -684,7 +681,7 @@ public class SessionAsyncIT
     public void shouldRunAfterBeginTxFailureOnBookmark()
     {
         ServerVersion version = neo4j.version();
-        assumeTrue( "Server " + version + " does not support bookmark", version.greaterThanOrEqual( v3_1_0 ) );
+        assumeTrue( version.greaterThanOrEqual( v3_1_0 ), "Server " + version + " does not support bookmark" );
 
         session = neo4j.driver().session( "Illegal Bookmark" );
 
@@ -869,7 +866,6 @@ public class SessionAsyncIT
             assertThat( e.getMessage(), containsString( "/ by zero" ) );
         }
     }
-
 
     @Test
     public void shouldPropagatePullAllFailureWhenClosed()
@@ -1061,7 +1057,7 @@ public class SessionAsyncIT
                     assertThat( e, is( blockingOperationInEventLoopError() ) );
                 }
             }
-            return completedFuture( null );
+            return completedWithNull();
         };
 
         CompletionStage<Void> result = session.readTransactionAsync( completionStageTransactionWork );
@@ -1276,7 +1272,7 @@ public class SessionAsyncIT
 
         CompletionStage<StatementResultCursor> response =
                 session.runAsync( "MATCH (p:Person {id: $id}) SET p.age = $age RETURN p",
-                parameters( "id", id, "age", age ) );
+                        parameters( "id", id, "age", age ) );
 
         response.whenComplete( ( cursor, error ) ->
         {

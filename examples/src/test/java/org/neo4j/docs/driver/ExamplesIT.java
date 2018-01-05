@@ -18,9 +18,9 @@
  */
 package org.neo4j.docs.driver;
 
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.HashSet;
 import java.util.List;
@@ -32,8 +32,8 @@ import org.neo4j.driver.v1.TransactionWork;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.summary.ResultSummary;
 import org.neo4j.driver.v1.summary.StatementType;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 import org.neo4j.driver.v1.util.StdIOCapture;
-import org.neo4j.driver.v1.util.TestNeo4j;
 import org.neo4j.driver.v1.util.TestUtil;
 
 import static java.util.Arrays.asList;
@@ -43,19 +43,18 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.driver.v1.Values.parameters;
 import static org.neo4j.driver.v1.util.Neo4jRunner.PASSWORD;
 import static org.neo4j.driver.v1.util.Neo4jRunner.USER;
 import static org.neo4j.driver.v1.util.TestUtil.await;
 
+@ExtendWith( Neo4jExtension.class )
 public class ExamplesIT
 {
-    @ClassRule
-    public static TestNeo4j neo4j = new TestNeo4j();
-
+    private Neo4jExtension neo4j;
     private String uri;
 
     private int readInt( final String statement, final Value parameters )
@@ -109,9 +108,10 @@ public class ExamplesIT
         return readInt( "MATCH (a:Company {name: $name}) RETURN count(a)", parameters( "name", name ) );
     }
 
-    @Before
-    public void setUp()
+    @BeforeEach
+    public void setUp( Neo4jExtension neo4jExtension )
     {
+        neo4j = neo4jExtension;
         uri = neo4j.uri().toString();
         TestUtil.cleanDb( neo4j.driver() );
     }
@@ -419,7 +419,8 @@ public class ExamplesIT
             assertThat( personCount( "Bob" ), is( 1 ) );
 
             int employeeCountOfWayne = readInt(
-                "MATCH (emp:Person)-[WORKS_FOR]->(com:Company) WHERE com.name = 'Wayne Enterprises' RETURN count(emp)" );
+                    "MATCH (emp:Person)-[WORKS_FOR]->(com:Company) WHERE com.name = 'Wayne Enterprises' RETURN count" +
+                    "(emp)" );
             assertThat( employeeCountOfWayne, is( 1 ) );
 
             int employeeCountOfLexCorp = readInt(

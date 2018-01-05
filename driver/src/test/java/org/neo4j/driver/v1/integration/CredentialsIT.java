@@ -18,13 +18,15 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 
 import org.neo4j.driver.internal.security.InternalAuthToken;
@@ -37,36 +39,38 @@ import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.exceptions.AuthenticationException;
 import org.neo4j.driver.v1.exceptions.SecurityException;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 import org.neo4j.driver.v1.util.Neo4jSettings;
-import org.neo4j.driver.v1.util.TestNeo4j;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.driver.internal.logging.DevNullLogging.DEV_NULL_LOGGING;
 import static org.neo4j.driver.v1.AuthTokens.basic;
 import static org.neo4j.driver.v1.AuthTokens.custom;
 import static org.neo4j.driver.v1.Values.ofValue;
 import static org.neo4j.driver.v1.Values.parameters;
 
+@ExtendWith( Neo4jExtension.class )
 public class CredentialsIT
 {
-    @ClassRule
-    public static TemporaryFolder tempDir = new TemporaryFolder( new File( "target" ) );
-
-    @ClassRule
-    public static TestNeo4j neo4j = new TestNeo4j();
-
     private static final String PASSWORD = "secret";
 
-    @BeforeClass
-    public static void enableAuth() throws Exception
+    private static Neo4jExtension neo4j;
+
+    @BeforeAll
+    public static void enableAuth( Neo4jExtension neo4jExtension ) throws Exception
     {
+        neo4j = neo4jExtension;
+
+        // db will be restarted with custom password, disable cleanup which uses driver with default credentials
+        neo4j.setCleanDbBeforeEach( false );
+
         neo4j.restartDb( Neo4jSettings.TEST_SETTINGS
                 .updateWith( Neo4jSettings.AUTH_ENABLED, "true" )
-                .updateWith( Neo4jSettings.DATA_DIR, tempDir.getRoot().getAbsolutePath().replace( "\\", "/" ) ) );
+                .updateWith( Neo4jSettings.DATA_DIR, tempDirectory() ) );
 
         InternalAuthToken authToken = new InternalAuthToken( parameters(
                 "scheme", "basic",
@@ -79,13 +83,6 @@ public class CredentialsIT
         {
             session.run( "RETURN 1" ).consume();
         }
-    }
-
-    @AfterClass
-    public static void restartWithDefaultSettings()
-    {
-        // restart after the test to prevent TemporaryFolder rule from cleaning up files of a running database
-        neo4j.restartDb( Neo4jSettings.TEST_SETTINGS );
     }
 
     @Test
@@ -185,6 +182,20 @@ public class CredentialsIT
         catch ( Exception e )
         {
             assertThat( e, instanceOf( AuthenticationException.class ) );
+        }
+    }
+
+    private static String tempDirectory()
+    {
+        try
+        {
+            Path tempDirectory = Files.createTempDirectory( Paths.get( "target" ), "data" );
+            String absolutePath = tempDirectory.toAbsolutePath().toString();
+            return absolutePath.replace( "\\", "/" );
+        }
+        catch ( IOException e )
+        {
+            throw new UncheckedIOException( e );
         }
     }
 }

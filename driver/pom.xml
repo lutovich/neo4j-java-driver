@@ -51,8 +51,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -215,31 +220,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.20.1</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.20.1</version>
-        <configuration>
-          <!--
-          Failsafe plugin starting from 2.19 by default runs tests from 'target/test-classes' against a package jar.
-          When we shade things into the jar packages are changed, however tests in 'target/test-classes' do not.
-          This results in AbstractMethodError and other kind of strange errors.
-
-          Following setting tells failsafe to run tests against 'target/classes' instead.
-          See https://issues.apache.org/jira/browse/SUREFIRE-1198 for more details.
-          -->
-          <classesDirectory>${project.build.directory}/classes</classesDirectory>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

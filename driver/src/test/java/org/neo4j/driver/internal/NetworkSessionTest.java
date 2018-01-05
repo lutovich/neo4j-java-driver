@@ -18,10 +18,8 @@
  */
 package org.neo4j.driver.internal;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -50,13 +48,14 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.RETURNS_MOCKS;
@@ -79,14 +78,11 @@ import static org.neo4j.driver.v1.util.TestUtil.connectionMock;
 
 public class NetworkSessionTest
 {
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
-
     private Connection connection;
     private ConnectionProvider connectionProvider;
     private NetworkSession session;
 
-    @Before
+    @BeforeEach
     public void setUp()
     {
         connection = connectionMock();
@@ -110,14 +106,9 @@ public class NetworkSessionTest
     @Test
     public void shouldNotAllowNewTxWhileOneIsRunning()
     {
-        // Given
         session.beginTransaction();
 
-        // Expect
-        exception.expect( ClientException.class );
-
-        // When
-        session.beginTransaction();
+        assertThrows( ClientException.class, session::beginTransaction );
     }
 
     @Test
@@ -136,14 +127,9 @@ public class NetworkSessionTest
     @Test
     public void shouldNotBeAbleToUseSessionWhileOngoingTransaction()
     {
-        // Given
         session.beginTransaction();
 
-        // Expect
-        exception.expect( ClientException.class );
-
-        // When
-        session.run( "RETURN 1" );
+        assertThrows( ClientException.class, () -> session.run( "RETURN 1" ) );
     }
 
     @Test

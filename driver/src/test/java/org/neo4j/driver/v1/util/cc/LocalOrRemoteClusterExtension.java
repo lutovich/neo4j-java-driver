@@ -18,28 +18,23 @@
  */
 package org.neo4j.driver.v1.util.cc;
 
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.net.URI;
 
-import org.neo4j.driver.internal.util.DriverFactoryWithOneEventLoopThread;
 import org.neo4j.driver.v1.AuthToken;
 import org.neo4j.driver.v1.AuthTokens;
-import org.neo4j.driver.v1.Driver;
-import org.neo4j.driver.v1.util.TestUtil;
 
 import static org.neo4j.driver.internal.DriverFactory.BOLT_ROUTING_URI_SCHEME;
-import static org.neo4j.driver.v1.Config.defaultConfig;
 
-public class LocalOrRemoteClusterRule extends ExternalResource
+public class LocalOrRemoteClusterExtension extends ClusterExtension
 {
     private static final String CLUSTER_URI_SYSTEM_PROPERTY_NAME = "externalClusterUri";
     private static final String NEO4J_USER_PASSWORD_PROPERTY_NAME = "neo4jUserPassword";
 
-    private ClusterRule localClusterRule;
     private URI clusterUri;
 
-    public LocalOrRemoteClusterRule()
+    public LocalOrRemoteClusterExtension()
     {
         assertValidSystemPropertiesDefined();
     }
@@ -55,11 +50,11 @@ public class LocalOrRemoteClusterRule extends ExternalResource
         {
             return AuthTokens.basic( "neo4j", neo4jUserPasswordFromSystemProperty() );
         }
-        return localClusterRule.getDefaultAuthToken();
+        return getDefaultAuthToken();
     }
 
     @Override
-    protected void before() throws Throwable
+    public void beforeAll( ExtensionContext context ) throws Exception
     {
         if ( externalClusterExists() )
         {
@@ -67,29 +62,33 @@ public class LocalOrRemoteClusterRule extends ExternalResource
         }
         else
         {
-            localClusterRule = new ClusterRule();
-            localClusterRule.before();
-            clusterUri = localClusterRule.getCluster().leader().getRoutingUri();
+            super.beforeAll( context );
+            clusterUri = getCluster().leader().getRoutingUri();
         }
     }
 
     @Override
-    protected void after()
+    public void afterAll( ExtensionContext context )
     {
-        if ( externalClusterExists() )
+        if ( !externalClusterExists() )
         {
-            DriverFactoryWithOneEventLoopThread driverFactory = new DriverFactoryWithOneEventLoopThread();
-            try ( Driver driver = driverFactory.newInstance( getClusterUri(), getAuthToken(), defaultConfig() ) )
-            {
-                TestUtil.cleanDb( driver );
-            }
+            super.afterAll( context );
         }
-        else
+    }
+
+    @Override
+    public void beforeEach( ExtensionContext context )
+    {
+        super.beforeEach( context );
+    }
+
+    @Override
+    public void afterEach( ExtensionContext context )
+    {
+        if ( !externalClusterExists() )
         {
-            localClusterRule.after();
-            localClusterRule = null;
+            super.afterEach( context );
         }
-        clusterUri = null;
     }
 
     private static void assertValidSystemPropertiesDefined()

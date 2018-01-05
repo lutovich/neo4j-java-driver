@@ -9,6 +9,10 @@
     <java.version>1.8</java.version>
     <hamcrest.version>2.0.0.0</hamcrest.version>
     <mockito.version>2.13.0</mockito.version>
+    <junit4.version>4.12.2</junit4.version>
+    <junit5.version>5.0.2</junit5.version>
+    <junit.platform.surefire.provider.version>1.0.2</junit.platform.surefire.provider.version>
+    <maven.surefire.and.failsafe.version>2.19.1</maven.surefire.and.failsafe.version>
   </properties>
 
   <groupId>org.neo4j.driver</groupId>
@@ -64,9 +68,15 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>4.12</version>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-api</artifactId>
+        <version>${junit5.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-params</artifactId>
+        <version>${junit5.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
@@ -87,6 +97,77 @@
               </goals>
             </execution>
           </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${maven.surefire.and.failsafe.version}</version>
+          <configuration>
+            <includes>
+              <include>**/*Test.java</include>
+            </includes>
+          </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.junit.platform</groupId>
+              <artifactId>junit-platform-surefire-provider</artifactId>
+              <version>${junit.platform.surefire.provider.version}</version>
+            </dependency>
+            <dependency>
+              <groupId>org.junit.jupiter</groupId>
+              <artifactId>junit-jupiter-engine</artifactId>
+              <version>${junit5.version}</version>
+            </dependency>
+            <dependency>
+              <groupId>org.junit.vintage</groupId>
+              <artifactId>junit-vintage-engine</artifactId>
+              <version>${junit4.version}</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${maven.surefire.and.failsafe.version}</version>
+          <configuration>
+            <!--
+            Failsafe plugin starting from 2.19 by default runs tests from 'target/test-classes' against a packaged jar.
+            When we shade things into the jar packages are changed, however tests in 'target/test-classes' are not.
+            This results in AbstractMethodError and other kind of strange errors.
+
+            Following setting tells failsafe to run tests against 'target/classes' instead.
+            See https://issues.apache.org/jira/browse/SUREFIRE-1198 for more details.
+            -->
+            <classesDirectory>${project.build.directory}/classes</classesDirectory>
+            <includes>
+              <include>**/*IT.java</include>
+            </includes>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>integration-test</goal>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
+          <dependencies>
+            <dependency>
+              <groupId>org.junit.platform</groupId>
+              <artifactId>junit-platform-surefire-provider</artifactId>
+              <version>${junit.platform.surefire.provider.version}</version>
+            </dependency>
+            <dependency>
+              <groupId>org.junit.jupiter</groupId>
+              <artifactId>junit-jupiter-engine</artifactId>
+              <version>${junit5.version}</version>
+            </dependency>
+            <dependency>
+              <groupId>org.junit.vintage</groupId>
+              <artifactId>junit-vintage-engine</artifactId>
+              <version>${junit4.version}</version>
+            </dependency>
+          </dependencies>
         </plugin>
       </plugins>
     </pluginManagement>

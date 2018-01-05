@@ -18,7 +18,7 @@
  */
 package org.neo4j.driver.internal.handlers;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CompletableFuture;
 

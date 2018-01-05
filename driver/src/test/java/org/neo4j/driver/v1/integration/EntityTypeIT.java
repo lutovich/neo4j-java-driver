@@ -18,22 +18,29 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.neo4j.driver.v1.StatementResult;
-import org.neo4j.driver.v1.util.TestNeo4jSession;
 import org.neo4j.driver.v1.types.Node;
 import org.neo4j.driver.v1.types.Path;
 import org.neo4j.driver.v1.types.Relationship;
+import org.neo4j.driver.v1.util.Neo4jSessionExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 
+@ExtendWith( Neo4jSessionExtension.class )
 public class EntityTypeIT
 {
-    @Rule
-    public TestNeo4jSession session = new TestNeo4jSession();
+    private Neo4jSessionExtension session;
+
+    @BeforeEach
+    void setUp( Neo4jSessionExtension neo4jSessionExtension )
+    {
+        session = neo4jSessionExtension;
+    }
 
     @Test
     public void shouldReturnIdentitiesOfNodes() throws Throwable

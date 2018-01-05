@@ -18,14 +18,14 @@
  */
 package org.neo4j.driver.internal.cluster.loadbalancing;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.neo4j.driver.internal.BoltServerAddress;
 import org.neo4j.driver.v1.Logger;
 import org.neo4j.driver.v1.Logging;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.startsWith;

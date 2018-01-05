@@ -18,19 +18,17 @@
  */
 package org.neo4j.driver.internal.value;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.neo4j.driver.internal.InternalRelationship;
 import org.neo4j.driver.internal.types.TypeConstructor;
 import org.neo4j.driver.v1.Value;
 
 import static java.util.Collections.singletonMap;
-
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.neo4j.driver.v1.Values.value;
 
 public class RelationshipValueTest

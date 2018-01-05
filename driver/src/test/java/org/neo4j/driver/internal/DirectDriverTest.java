@@ -18,9 +18,10 @@
  */
 package org.neo4j.driver.internal;
 
-import org.junit.After;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -32,28 +33,34 @@ import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.Transaction;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 import org.neo4j.driver.v1.util.StubServer;
-import org.neo4j.driver.v1.util.TestNeo4j;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.neo4j.driver.internal.BoltServerAddress.LOCAL_DEFAULT;
 import static org.neo4j.driver.internal.util.Matchers.directDriverWithAddress;
 import static org.neo4j.driver.v1.Values.parameters;
 import static org.neo4j.driver.v1.util.StubServer.INSECURE_CONFIG;
 
+@ExtendWith( Neo4jExtension.class )
 public class DirectDriverTest
 {
-    @ClassRule
-    public static final TestNeo4j neo4j = new TestNeo4j();
+    private static Neo4jExtension neo4j;
 
     private Driver driver;
 
-    @After
+    @BeforeAll
+    public static void beforeAll( Neo4jExtension neo4jExtension )
+    {
+        neo4j = neo4jExtension;
+    }
+
+    @AfterEach
     public void closeDriver() throws Exception
     {
         if ( driver != null )
@@ -181,7 +188,7 @@ public class DirectDriverTest
      * @param neo4j the test neo4j instance to check.
      * @return {@code true} if given test neo4j supports config option, {@code false} otherwise.
      */
-    private static boolean supportsListenAddressConfiguration( TestNeo4j neo4j )
+    private static boolean supportsListenAddressConfiguration( Neo4jExtension neo4j )
     {
         ServerVersion version = ServerVersion.version( neo4j.driver() );
         return version.greaterThanOrEqual( ServerVersion.v3_1_0 );

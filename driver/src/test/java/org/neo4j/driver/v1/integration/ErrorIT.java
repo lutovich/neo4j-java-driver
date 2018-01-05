@@ -19,9 +19,9 @@
 package org.neo4j.driver.v1.integration;
 
 import io.netty.channel.Channel;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,57 +45,52 @@ import org.neo4j.driver.v1.StatementResult;
 import org.neo4j.driver.v1.Transaction;
 import org.neo4j.driver.v1.exceptions.ClientException;
 import org.neo4j.driver.v1.exceptions.ServiceUnavailableException;
-import org.neo4j.driver.v1.util.TestNeo4jSession;
+import org.neo4j.driver.v1.util.Neo4jSessionExtension;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.driver.internal.logging.DevNullLogging.DEV_NULL_LOGGING;
 import static org.neo4j.driver.internal.util.Iterables.single;
 
+@ExtendWith( Neo4jSessionExtension.class )
 public class ErrorIT
 {
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
+    private Neo4jSessionExtension session;
 
-    @Rule
-    public TestNeo4jSession session = new TestNeo4jSession();
+    @BeforeEach
+    void setUp( Neo4jSessionExtension neo4jSessionExtension )
+    {
+        session = neo4jSessionExtension;
+    }
 
     @Test
     public void shouldThrowHelpfulSyntaxError() throws Throwable
     {
-        // Expect
-        exception.expect( ClientException.class );
-        exception.expectMessage( startsWith( "Invalid input") );
-
-        // When
         StatementResult result = session.run( "invalid statement" );
-        result.consume();
+
+        ClientException ex = assertThrows( ClientException.class, result::consume );
+        assertThat( ex.getMessage(), startsWith( "Invalid input" ) );
     }
 
     @Test
     public void shouldNotAllowMoreTxAfterClientException() throws Throwable
     {
-        // Given
         Transaction tx = session.beginTransaction();
 
-        // And Given an error has occurred
+        // an error has occurred
         try { tx.run( "invalid" ).consume(); } catch ( ClientException e ) {/*empty*/}
 
-        // Expect
-        exception.expect( ClientException.class );
-        exception.expectMessage( "Cannot run more statements in this transaction, " +
-                                 "because previous statements in the" );
-
-        // When
-        StatementResult cursor = tx.run( "RETURN 1" );
-        cursor.single().get( "1" ).asInt();
+        ClientException ex = assertThrows( ClientException.class, () -> tx.run( "RETURN 1" ) );
+        assertThat( ex.getMessage(), containsString( "Cannot run more statements in this transaction" ) );
     }
 
     @Test
@@ -136,11 +131,11 @@ public class ErrorIT
     @Test
     public void shouldExplainConnectionError() throws Throwable
     {
-        exception.expect( ServiceUnavailableException.class );
-        exception.expectMessage( "Unable to connect to localhost:7777, ensure the database is running " +
-                                 "and that there is a working network connection to it." );
+        ServiceUnavailableException ex = assertThrows( ServiceUnavailableException.class,
+                () -> GraphDatabase.driver( "bolt://localhost:7777" ) );
 
-        GraphDatabase.driver( "bolt://localhost:7777" );
+        assertEquals( "Unable to connect to localhost:7777, ensure the database is running and that " +
+                      "there is a working network connection to it.", ex.getMessage() );
     }
 
     @Test
@@ -160,13 +155,9 @@ public class ErrorIT
         tx.success();
 
         // then expect
-        exception.expect( ClientException.class );
-        exception.expectMessage( "Label '" + label + "' and property 'name' have a unique " +
-                "constraint defined on them, so an index is already created that matches this." );
-
-        // when
-        tx.close();
-
+        ClientException ex = assertThrows( ClientException.class, tx::close );
+        assertEquals( "Label '" + label + "' and property 'name' have a unique constraint defined on them, " +
+                      "so an index is already created that matches this.", ex.getMessage() );
     }
 
     @Test
@@ -177,12 +168,11 @@ public class ErrorIT
 
         Config config = Config.build().withoutEncryption().toConfig();
 
-        exception.expect( ClientException.class );
-        exception.expectMessage(
-                "Server responded HTTP. Make sure you are not trying to connect to the http endpoint " +
-                "(HTTP defaults to port 7474 whereas BOLT defaults to port 7687)" );
+        ClientException ex = assertThrows( ClientException.class,
+                () -> GraphDatabase.driver( "bolt://localhost:7474", config ) );
 
-        GraphDatabase.driver( "bolt://localhost:7474", config );
+        assertEquals( "Server responded HTTP. Make sure you are not trying to connect to the http " +
+                      "endpoint (HTTP defaults to port 7474 whereas BOLT defaults to port 7687)", ex.getMessage() );
     }
 
     @Test

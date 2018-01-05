@@ -23,8 +23,8 @@ import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.Session;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.driver.internal.util.Matchers.syntaxError;
 
 public class BlockingWrongQuery<C extends AbstractContext> extends AbstractBlockingQuery<C>

@@ -18,8 +18,8 @@
  */
 package org.neo4j.driver.v1.stress;
 
-import org.junit.AfterClass;
-import org.junit.Rule;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -41,37 +41,36 @@ import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.exceptions.SessionExpiredException;
 import org.neo4j.driver.v1.summary.ResultSummary;
 import org.neo4j.driver.v1.util.cc.ClusterMemberRole;
-import org.neo4j.driver.v1.util.cc.ClusterRule;
-import org.neo4j.driver.v1.util.cc.LocalOrRemoteClusterRule;
+import org.neo4j.driver.v1.util.cc.LocalOrRemoteClusterExtension;
 
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
 import static org.neo4j.driver.v1.util.cc.ClusterMember.SIMPLE_SCHEME;
 
+@ExtendWith( LocalOrRemoteClusterExtension.class )
 public class CausalClusteringStressIT extends AbstractStressTestBase<CausalClusteringStressIT.Context>
 {
-    @Rule
-    public final LocalOrRemoteClusterRule clusterRule = new LocalOrRemoteClusterRule();
+    private LocalOrRemoteClusterExtension clusterExtension;
 
-    @AfterClass
-    public static void stopSharedCluster()
+    @BeforeEach
+    void beforeEach( LocalOrRemoteClusterExtension clusterExtension )
     {
-        ClusterRule.stopSharedCluster();
+        this.clusterExtension = clusterExtension;
     }
 
     @Override
     URI databaseUri()
     {
-        return clusterRule.getClusterUri();
+        return clusterExtension.getClusterUri();
     }
 
     @Override
     AuthToken authToken()
     {
-        return clusterRule.getAuthToken();
+        return clusterExtension.getAuthToken();
     }
 
     @Override

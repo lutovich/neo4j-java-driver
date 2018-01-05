@@ -24,8 +24,8 @@ import io.netty.channel.EventLoop;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.channel.pool.ChannelPool;
 import io.netty.util.internal.ConcurrentSet;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.Set;
@@ -44,10 +44,10 @@ import org.neo4j.driver.internal.util.ServerVersion;
 
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -68,7 +68,7 @@ public class NettyConnectionTest
     private ExecutorService executor;
     private EventLoop eventLoop;
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception
     {
         shutdownEventLoop();

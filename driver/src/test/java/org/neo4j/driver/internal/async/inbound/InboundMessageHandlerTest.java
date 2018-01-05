@@ -20,9 +20,9 @@ package org.neo4j.driver.internal.async.inbound;
 
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.DecoderException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
@@ -42,9 +42,9 @@ import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.exceptions.Neo4jException;
 
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -60,7 +60,7 @@ public class InboundMessageHandlerTest
     private EmbeddedChannel channel;
     private InboundMessageDispatcher messageDispatcher;
 
-    @Before
+    @BeforeEach
     public void setUp()
     {
         channel = new EmbeddedChannel();
@@ -71,7 +71,7 @@ public class InboundMessageHandlerTest
         channel.pipeline().addFirst( handler );
     }
 
-    @After
+    @AfterEach
     public void tearDown()
     {
         if ( channel != null )

@@ -18,8 +18,9 @@
  */
 package org.neo4j.driver.v1.integration;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.neo4j.driver.v1.Config;
 import org.neo4j.driver.v1.Driver;
@@ -27,7 +28,7 @@ import org.neo4j.driver.v1.GraphDatabase;
 import org.neo4j.driver.v1.Logger;
 import org.neo4j.driver.v1.Logging;
 import org.neo4j.driver.v1.Session;
-import org.neo4j.driver.v1.util.TestNeo4j;
+import org.neo4j.driver.v1.util.Neo4jExtension;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.anyVararg;
@@ -36,10 +37,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith( Neo4jExtension.class )
 public class LoggingIT
 {
-    @Rule
-    public TestNeo4j neo4j = new TestNeo4j();
+    private Neo4jExtension neo4j;
+
+    @BeforeEach
+    void setUp( Neo4jExtension neo4jExtension )
+    {
+        neo4j = neo4jExtension;
+    }
 
     @Test
     public void logShouldRecordDebugAndTraceInfo() throws Exception

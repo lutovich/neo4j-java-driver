@@ -18,27 +18,23 @@
  */
 package org.neo4j.driver.internal.value;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import org.neo4j.driver.internal.types.InternalTypeSystem;
 import org.neo4j.driver.internal.types.TypeConstructor;
-import org.neo4j.driver.v1.types.TypeSystem;
 import org.neo4j.driver.v1.Value;
 import org.neo4j.driver.v1.exceptions.value.LossyCoercion;
+import org.neo4j.driver.v1.types.TypeSystem;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class FloatValueTest
 {
     TypeSystem typeSystem = InternalTypeSystem.TYPE_SYSTEM;
-
-    @Rule
-    public ExpectedException exception = ExpectedException.none();
 
     @Test
     public void testZeroFloatValue() throws Exception
@@ -113,8 +109,7 @@ public class FloatValueTest
     {
         FloatValue value = new FloatValue( 1.1 );
 
-        exception.expect( LossyCoercion.class );
-        value.asInt();
+        assertThrows( LossyCoercion.class, value::asInt );
     }
 
     @Test
@@ -124,8 +119,7 @@ public class FloatValueTest
         FloatValue value2 = new FloatValue( Integer.MAX_VALUE + 1L);
 
         assertThat(value1.asInt(), equalTo(Integer.MAX_VALUE));
-        exception.expect( LossyCoercion.class );
-        value2.asInt();
+        assertThrows( LossyCoercion.class, value2::asInt );
     }
 
     @Test
@@ -135,7 +129,6 @@ public class FloatValueTest
         FloatValue value2 = new FloatValue( Integer.MIN_VALUE - 1L );
 
         assertThat(value1.asInt(), equalTo(Integer.MIN_VALUE));
-        exception.expect( LossyCoercion.class );
-        value2.asInt();
+        assertThrows( LossyCoercion.class, value2::asInt );
     }
 }
