@@ -57,13 +57,13 @@ public class RoundRobinLoadBalancingStrategy implements LoadBalancingStrategy
         int length = addresses.length;
         if ( length == 0 )
         {
-            log.trace( "Unable to select %s, no known addresses given", addressType );
+            log.trace( "Unable to select {}, no known addresses given", addressType );
             return null;
         }
 
         int index = roundRobinIndex.next( length );
         BoltServerAddress address = addresses[index];
-        log.trace( "Selected %s with address: '%s'", addressType, address );
+        log.trace( "Selected {} with address: '{}'", addressType, address );
         return address;
     }
 }

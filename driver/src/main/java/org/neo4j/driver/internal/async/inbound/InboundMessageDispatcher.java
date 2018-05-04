@@ -113,7 +113,7 @@ public class InboundMessageDispatcher implements MessageHandler
     @Override
     public void handleSuccessMessage( Map<String,Value> meta )
     {
-        log.debug( "S: SUCCESS %s", meta );
+        log.debug( "S: SUCCESS {}", meta );
         ResponseHandler handler = handlers.remove();
         handler.onSuccess( meta );
     }
@@ -123,7 +123,7 @@ public class InboundMessageDispatcher implements MessageHandler
     {
         if ( log.isDebugEnabled() )
         {
-            log.debug( "S: RECORD %s", Arrays.toString( fields ) );
+            log.debug( "S: RECORD {}", Arrays.toString( fields ) );
         }
         ResponseHandler handler = handlers.peek();
         handler.onRecord( fields );
@@ -132,7 +132,7 @@ public class InboundMessageDispatcher implements MessageHandler
     @Override
     public void handleFailureMessage( String code, String message )
     {
-        log.debug( "S: FAILURE %s \"%s\"", code, message );
+        log.debug( "S: FAILURE {} \"{}\"", code, message );
 
         currentError = ErrorUtil.newNeo4jError( code, message );
 
@@ -169,8 +169,8 @@ public class InboundMessageDispatcher implements MessageHandler
         }
         else
         {
-            log.warn( "Received IGNORED message for handler %s but error is missing and RESET is not in progress. " +
-                      "Current handlers %s", handler, handlers );
+            log.warn( "Received IGNORED message for handler {} but error is missing and RESET is not in progress. " +
+                      "Current handlers {}", handler, handlers );
 
             error = new ClientException( "Database ignored the request" );
         }

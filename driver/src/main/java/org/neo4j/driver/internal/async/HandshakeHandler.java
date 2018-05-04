@@ -105,7 +105,7 @@ public class HandshakeHandler extends ReplayingDecoder<Void>
     protected void decode( ChannelHandlerContext ctx, ByteBuf in, List<Object> out )
     {
         int serverSuggestedVersion = in.readInt();
-        log.debug( "S: [Bolt Handshake] %d", serverSuggestedVersion );
+        log.debug( "S: [Bolt Handshake] {}", serverSuggestedVersion );
 
         ChannelPipeline pipeline = ctx.pipeline();
         // this is a one-time handler, remove it when protocol version has been read

@@ -17,6 +17,11 @@
  */
 package org.neo4j.driver.v1;
 
+import java.util.logging.Level;
+
+import org.neo4j.driver.internal.logging.JdkLogging;
+import org.neo4j.driver.internal.logging.Slf4jLogging;
+
 /**
  * Accessor for {@link Logger} instances.
  */
@@ -29,4 +34,14 @@ public interface Logging
      * @return {@link Logger} instance
      */
     Logger getLog( String name );
+
+    static Logging slf4j()
+    {
+        return new Slf4jLogging();
+    }
+
+    static Logging jdk( Level level )
+    {
+        return new JdkLogging( level );
+    }
 }

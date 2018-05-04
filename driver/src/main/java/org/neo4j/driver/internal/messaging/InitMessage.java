@@ -59,7 +59,7 @@ public class InitMessage implements Message
     @Override
     public String toString()
     {
-        return format( "INIT \"%s\" {...}", userAgent, authToken );
+        return format( "INIT \"%s\" {...}", userAgent );
     }
 
     @Override

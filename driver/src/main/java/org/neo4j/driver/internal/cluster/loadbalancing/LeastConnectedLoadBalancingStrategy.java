@@ -61,7 +61,7 @@ public class LeastConnectedLoadBalancingStrategy implements LoadBalancingStrateg
         int size = addresses.length;
         if ( size == 0 )
         {
-            log.trace( "Unable to select %s, no known addresses given", addressType );
+            log.trace( "Unable to select {}, no known addresses given", addressType );
             return null;
         }
 
@@ -96,7 +96,7 @@ public class LeastConnectedLoadBalancingStrategy implements LoadBalancingStrateg
         }
         while ( index != startIndex );
 
-        log.trace( "Selected %s with address: '%s' and active connections: %s",
+        log.trace( "Selected {} with address: '{}' and active connections: {}",
                 addressType, leastConnectedAddress, leastActiveConnections );
 
         return leastConnectedAddress;

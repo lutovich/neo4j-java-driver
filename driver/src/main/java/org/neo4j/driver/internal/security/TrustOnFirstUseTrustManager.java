@@ -108,7 +108,7 @@ public class TrustOnFirstUseTrustManager implements X509TrustManager
     {
         this.fingerprint = fingerprint;
 
-        logger.info( "Adding %s as known and trusted certificate for %s.", fingerprint, serverId );
+        logger.info( "Adding {} as known and trusted certificate for {}.", fingerprint, serverId );
         createKnownCertFileIfNotExists();
 
         assertKnownHostFileWritable();

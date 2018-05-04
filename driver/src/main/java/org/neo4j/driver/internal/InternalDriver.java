@@ -114,7 +114,7 @@ public class InternalDriver implements Driver
     {
         if ( closed.compareAndSet( false, true ) )
         {
-            log.info( "Closing driver instance %s", hashCode() );
+            log.info( "Closing driver instance {}", hashCode() );
             return sessionFactory.close();
         }
         return completedWithNull();

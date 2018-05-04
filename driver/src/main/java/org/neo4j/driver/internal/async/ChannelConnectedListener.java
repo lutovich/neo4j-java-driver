@@ -57,11 +57,11 @@ public class ChannelConnectedListener implements ChannelFutureListener
 
         if ( future.isSuccess() )
         {
-            log.trace( "Channel %s connected, initiating bolt handshake", channel );
+            log.trace( "Channel {} connected, initiating bolt handshake", channel );
 
             ChannelPipeline pipeline = channel.pipeline();
             pipeline.addLast( new HandshakeHandler( pipelineBuilder, handshakeCompletedPromise, logging ) );
-            log.debug( "C: [Bolt Handshake] %s", handshakeString() );
+            log.debug( "C: [Bolt Handshake] {}", handshakeString() );
             channel.writeAndFlush( handshakeBuf(), channel.voidPromise() );
         }
         else
@@ -73,7 +73,7 @@ public class ChannelConnectedListener implements ChannelFutureListener
     private static Throwable databaseUnavailableError( BoltServerAddress address, Throwable cause )
     {
         return new ServiceUnavailableException( format(
-                "Unable to connect to %s, ensure the database is running and that there " +
+                "Unable to connect to {}, ensure the database is running and that there " +
                 "is a working network connection to it.", address ), cause );
     }
 }

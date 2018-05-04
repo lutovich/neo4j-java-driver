@@ -72,7 +72,7 @@ public class NettyChannelHealthChecker implements ChannelHealthChecker
             boolean tooOld = ageMillis > maxAgeMillis;
             if ( tooOld )
             {
-                log.trace( "Failed acquire channel %s from the pool because it is too old: %s > %s",
+                log.trace( "Failed acquire channel {} from the pool because it is too old: {} > {}",
                         channel, ageMillis, maxAgeMillis );
             }
 
@@ -91,7 +91,7 @@ public class NettyChannelHealthChecker implements ChannelHealthChecker
                 long idleTime = clock.millis() - lastUsedTimestamp;
                 boolean idleTooLong = idleTime > poolSettings.idleTimeBeforeConnectionTest();
 
-                log.trace( "Channel %s has been idle for %s and needs a ping", channel, idleTime );
+                log.trace( "Channel {} has been idle for {} and needs a ping", channel, idleTime );
 
                 return idleTooLong;
             }

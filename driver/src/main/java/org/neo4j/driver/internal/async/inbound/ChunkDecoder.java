@@ -64,7 +64,7 @@ public class ChunkDecoder extends LengthFieldBasedFrameDecoder
             int readerIndexWithChunkHeader = originalReaderIndex - INITIAL_BYTES_TO_STRIP;
             int lengthWithChunkHeader = INITIAL_BYTES_TO_STRIP + buffer.readableBytes();
             String hexDump = ByteBufUtil.hexDump( buffer, readerIndexWithChunkHeader, lengthWithChunkHeader );
-            log.trace( "S: %s", hexDump );
+            log.trace( "S: {}", hexDump );
         }
         return super.extractFrame( ctx, buffer, index, length );
     }

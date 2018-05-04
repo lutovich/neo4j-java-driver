@@ -19,8 +19,6 @@ package org.neo4j.driver.internal.logging;
 
 import io.netty.util.internal.logging.AbstractInternalLogger;
 
-import java.util.regex.Pattern;
-
 import org.neo4j.driver.v1.Logger;
 
 import static java.lang.String.format;
@@ -29,7 +27,6 @@ import static java.lang.String.format;
 public class NettyLogger extends AbstractInternalLogger
 {
     private Logger log;
-    private static final Pattern PLACE_HOLDER_PATTERN = Pattern.compile("\\{\\}");
 
     public NettyLogger( String name, Logger log )
     {
@@ -52,25 +49,25 @@ public class NettyLogger extends AbstractInternalLogger
     @Override
     public void trace( String format, Object arg )
     {
-        log.trace( toDriverLoggerFormat( format ), arg );
+        log.trace( format, arg );
     }
 
     @Override
     public void trace( String format, Object argA, Object argB )
     {
-        log.trace( toDriverLoggerFormat( format ), argA, argB );
+        log.trace( format, argA, argB );
     }
 
     @Override
     public void trace( String format, Object... arguments )
     {
-        log.trace( toDriverLoggerFormat( format ), arguments );
+        log.trace( format, arguments );
     }
 
     @Override
     public void trace( String msg, Throwable t )
     {
-        log.trace( "%s%n%s", msg, t );
+        log.trace( "{}{}%n{}", msg, t );
     }
 
     @Override
@@ -88,25 +85,25 @@ public class NettyLogger extends AbstractInternalLogger
     @Override
     public void debug( String format, Object arg )
     {
-        log.debug( toDriverLoggerFormat( format ), arg );
+        log.debug( format, arg );
     }
 
     @Override
     public void debug( String format, Object argA, Object argB )
     {
-        log.debug( toDriverLoggerFormat( format ), argA, argB );
+        log.debug( format, argA, argB );
     }
 
     @Override
     public void debug( String format, Object... arguments )
     {
-        log.debug( toDriverLoggerFormat( format ), arguments );
+        log.debug( format, arguments );
     }
 
     @Override
     public void debug( String msg, Throwable t )
     {
-        log.debug( "%s%n%s", msg, t );
+        log.debug( "{}%n{}", msg, t );
     }
 
     @Override
@@ -124,25 +121,25 @@ public class NettyLogger extends AbstractInternalLogger
     @Override
     public void info( String format, Object arg )
     {
-        log.info( toDriverLoggerFormat( format ), arg );
+        log.info( format, arg );
     }
 
     @Override
     public void info( String format, Object argA, Object argB )
     {
-        log.info( toDriverLoggerFormat( format ), argA, argB );
+        log.info( format, argA, argB );
     }
 
     @Override
     public void info( String format, Object... arguments )
     {
-        log.info( toDriverLoggerFormat( format ), arguments );
+        log.info( format, arguments );
     }
 
     @Override
     public void info( String msg, Throwable t )
     {
-        log.info( "%s%n%s", msg, t );
+        log.info( "{}%n{}", msg, t );
     }
 
     @Override
@@ -160,25 +157,25 @@ public class NettyLogger extends AbstractInternalLogger
     @Override
     public void warn( String format, Object arg )
     {
-        log.warn( toDriverLoggerFormat( format ), arg );
+        log.warn( format, arg );
     }
 
     @Override
     public void warn( String format, Object... arguments )
     {
-        log.warn( toDriverLoggerFormat( format ), arguments );
+        log.warn( format, arguments );
     }
 
     @Override
     public void warn( String format, Object argA, Object argB )
     {
-        log.warn( toDriverLoggerFormat( format ), argA, argB );
+        log.warn( format, argA, argB );
     }
 
     @Override
     public void warn( String msg, Throwable t )
     {
-        log.warn( "%s%n%s", msg, t );
+        log.warn( "{}%n{}", msg, t );
     }
 
     @Override
@@ -208,7 +205,6 @@ public class NettyLogger extends AbstractInternalLogger
     @Override
     public void error( String format, Object... arguments )
     {
-        format = toDriverLoggerFormat( format );
         if ( arguments.length == 0 )
         {
             log.error( format, null );
@@ -228,10 +224,5 @@ public class NettyLogger extends AbstractInternalLogger
     public void error( String msg, Throwable t )
     {
         log.error( msg, t );
-    }
-
-    private String toDriverLoggerFormat( String format )
-    {
-        return PLACE_HOLDER_PATTERN.matcher( format ).replaceAll( "%s" );
     }
 }

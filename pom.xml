@@ -62,6 +62,13 @@
         <version>2.1.10</version>
       </dependency>
 
+      <!-- Optional logging dependencies -->
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.7.25</version>
+      </dependency>
+
       <!-- Test dependencies -->
       <dependency>
         <groupId>org.hamcrest</groupId>

@@ -81,7 +81,7 @@ public class ConnectionPoolImpl implements ConnectionPool
     @Override
     public CompletionStage<Connection> acquire( BoltServerAddress address )
     {
-        log.trace( "Acquiring a connection from pool towards %s", address );
+        log.trace( "Acquiring a connection from pool towards {}", address );
 
         assertNotClosed();
         ChannelPool pool = getOrCreatePool( address );
@@ -124,7 +124,7 @@ public class ConnectionPoolImpl implements ConnectionPool
                     ChannelPool pool = pools.remove( address );
                     if ( pool != null )
                     {
-                        log.info( "Closing connection pool towards %s, it has no active connections " +
+                        log.info( "Closing connection pool towards {}, it has no active connections " +
                                   "and is not in the routing table", address );
                         pool.close();
                     }
@@ -157,7 +157,7 @@ public class ConnectionPoolImpl implements ConnectionPool
                     BoltServerAddress address = entry.getKey();
                     ChannelPool pool = entry.getValue();
 
-                    log.info( "Closing connection pool towards %s", address );
+                    log.info( "Closing connection pool towards {}", address );
                     pool.close();
                 }
 

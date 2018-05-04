@@ -42,14 +42,14 @@ public class PingResponseHandler implements ResponseHandler
     @Override
     public void onSuccess( Map<String,Value> metadata )
     {
-        log.trace( "Channel %s pinged successfully", channel );
+        log.trace( "Channel {} pinged successfully", channel );
         result.setSuccess( true );
     }
 
     @Override
     public void onFailure( Throwable error )
     {
-        log.trace( "Channel %s failed ping %s", channel, error );
+        log.trace( "Channel {} failed ping %s", channel, error );
         result.setSuccess( false );
     }
 

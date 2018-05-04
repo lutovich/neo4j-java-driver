@@ -159,7 +159,7 @@ public class DriverFactory
         SessionFactory sessionFactory = createSessionFactory( connectionProvider, retryLogic, config );
         InternalDriver driver = createDriver(securityPlan, sessionFactory, metrics, config);
         Logger log = config.logging().getLog( Driver.class.getSimpleName() );
-        log.info( "Direct driver instance %s created for server address %s", driver.hashCode(), address );
+        log.info( "Direct driver instance {} created for server address {}", driver.hashCode(), address );
         return driver;
     }
 
@@ -180,7 +180,7 @@ public class DriverFactory
         SessionFactory sessionFactory = createSessionFactory( connectionProvider, retryLogic, config );
         InternalDriver driver = createDriver(securityPlan, sessionFactory, metrics, config);
         Logger log = config.logging().getLog( Driver.class.getSimpleName() );
-        log.info( "Routing driver instance %s created for server address %s", driver.hashCode(), address );
+        log.info( "Routing driver instance {} created for server address {}", driver.hashCode(), address );
         return driver;
     }
 

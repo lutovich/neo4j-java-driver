@@ -248,7 +248,7 @@ public class Rediscovery
         else
         {
             // connection turned out to be broken
-            logger.error( format( "Failed to connect to routing server '%s'.", routerAddress ), error );
+            logger.error( format( "Failed to connect to routing server '{}'.", routerAddress ), error );
             routingTable.forget( routerAddress );
             return null;
         }

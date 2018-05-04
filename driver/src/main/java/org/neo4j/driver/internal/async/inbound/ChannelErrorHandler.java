@@ -96,7 +96,7 @@ public class ChannelErrorHandler extends ChannelInboundHandlerAdapter
     {
         Throwable cause = transformError( error );
         messageDispatcher.handleFatalError( cause );
-        log.debug( "Closing channel because of a failure '%s'", error );
+        log.debug( "Closing channel because of a failure '{}'", error );
         ctx.close();
     }
 

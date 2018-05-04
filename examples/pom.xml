@@ -26,14 +26,24 @@
     <dependency>
       <groupId>org.neo4j.driver</groupId>
       <artifactId>neo4j-java-driver</artifactId>
-      <version>${project.version}</version>
+      <version>9.9.9</version>
     </dependency>
+    <!--<dependency>-->
+      <!--<groupId>ch.qos.logback</groupId>-->
+      <!--<artifactId>logback-classic</artifactId>-->
+      <!--<version>1.2.3</version>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+      <!--<groupId>org.apache.logging.log4j</groupId>-->
+      <!--<artifactId>log4j-slf4j-impl</artifactId>-->
+      <!--<version>2.11.0</version>-->
+    <!--</dependency>-->
 
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.neo4j.driver</groupId>
       <artifactId>neo4j-java-driver</artifactId>
-      <version>${project.version}</version>
+      <version>9.9.9</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

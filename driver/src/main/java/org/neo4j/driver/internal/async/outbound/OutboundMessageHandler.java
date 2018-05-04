@@ -72,7 +72,7 @@ public class OutboundMessageHandler extends MessageToMessageEncoder<Message>
     @Override
     protected void encode( ChannelHandlerContext ctx, Message msg, List<Object> out )
     {
-        log.debug( "C: %s", msg );
+        log.debug( "C: {}", msg );
 
         ByteBuf messageBuf = ctx.alloc().ioBuffer();
         output.start( messageBuf );
@@ -91,7 +91,7 @@ public class OutboundMessageHandler extends MessageToMessageEncoder<Message>
 
         if ( log.isTraceEnabled() )
         {
-            log.trace( "C: %s", hexDump( messageBuf ) );
+            log.trace( "C: {}", hexDump( messageBuf ) );
         }
 
         BoltProtocolUtil.writeMessageBoundary( messageBuf );
