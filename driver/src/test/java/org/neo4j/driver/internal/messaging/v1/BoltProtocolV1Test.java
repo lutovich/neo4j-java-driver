@@ -52,6 +52,7 @@ import org.neo4j.driver.internal.spi.ResponseHandler;
 import org.neo4j.driver.internal.util.Futures;
 import org.neo4j.driver.v1.Logging;
 import org.neo4j.driver.v1.Statement;
+import org.neo4j.driver.v1.TransactionConfig;
 import org.neo4j.driver.v1.Value;
 
 import static java.util.Collections.emptyMap;
@@ -141,7 +142,7 @@ public class BoltProtocolV1Test
     {
         Connection connection = connectionMock();
 
-        CompletionStage<Void> stage = protocol.beginTransaction( connection, Bookmarks.empty() );
+        CompletionStage<Void> stage = protocol.beginTransaction( connection, Bookmarks.empty(), TransactionConfig.empty() );
 
         verify( connection ).write(
                 new RunMessage( "BEGIN" ), NoOpResponseHandler.INSTANCE,
@@ -156,7 +157,7 @@ public class BoltProtocolV1Test
         Connection connection = connectionMock();
         Bookmarks bookmarks = Bookmarks.from( "neo4j:bookmark:v1:tx100" );
 
-        CompletionStage<Void> stage = protocol.beginTransaction( connection, bookmarks );
+        CompletionStage<Void> stage = protocol.beginTransaction( connection, bookmarks, TransactionConfig.empty() );
 
         verify( connection ).writeAndFlush(
                 eq( new RunMessage( "BEGIN", bookmarks.asBeginTransactionParameters() ) ), eq( NoOpResponseHandler.INSTANCE ),
@@ -247,7 +248,7 @@ public class BoltProtocolV1Test
         if ( autoCommitTx )
         {
 
-            cursorStage = protocol.runInAutoCommitTransaction( connection, STATEMENT, false );
+            cursorStage = protocol.runInAutoCommitTransaction( connection, STATEMENT, Bookmarks.empty(), TransactionConfig.empty(), false );
         }
         else
         {
@@ -267,7 +268,7 @@ public class BoltProtocolV1Test
         CompletionStage<InternalStatementResultCursor> cursorStage;
         if ( session )
         {
-            cursorStage = protocol.runInAutoCommitTransaction( connection, STATEMENT, true );
+            cursorStage = protocol.runInAutoCommitTransaction( connection, STATEMENT, Bookmarks.empty(), TransactionConfig.empty(), true );
         }
         else
         {
