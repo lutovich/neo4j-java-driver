@@ -43,9 +43,9 @@ public class SessionFactoryImpl implements SessionFactory
     }
 
     @Override
-    public Session newInstance( AccessMode mode, Bookmarks bookmarks )
+    public Session newInstance( AccessMode mode, Bookmarks bookmarks, String database )
     {
-        NetworkSession session = createSession( connectionProvider, retryLogic, mode, logging );
+        NetworkSession session = createSession( connectionProvider, retryLogic, mode, database, logging );
         session.setBookmarks( bookmarks );
         return session;
     }
@@ -75,10 +75,10 @@ public class SessionFactoryImpl implements SessionFactory
     }
 
     private NetworkSession createSession( ConnectionProvider connectionProvider, RetryLogic retryLogic,
-            AccessMode mode, Logging logging )
+            AccessMode mode, String database, Logging logging )
     {
         return leakedSessionsLoggingEnabled
-               ? new LeakLoggingNetworkSession( connectionProvider, mode, retryLogic, logging )
-               : new NetworkSession( connectionProvider, mode, retryLogic, logging );
+               ? new LeakLoggingNetworkSession( connectionProvider, mode, database, retryLogic, logging )
+               : new NetworkSession( connectionProvider, mode, database, retryLogic, logging );
     }
 }

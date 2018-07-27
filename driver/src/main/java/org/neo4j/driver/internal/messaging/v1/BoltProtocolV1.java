@@ -88,11 +88,16 @@ public class BoltProtocolV1 implements BoltProtocol
     }
 
     @Override
-    public CompletionStage<Void> beginTransaction( Connection connection, Bookmarks bookmarks, TransactionConfig config )
+    public CompletionStage<Void> beginTransaction( Connection connection, Bookmarks bookmarks, String database, TransactionConfig config )
     {
         if ( config != null && !config.isEmpty() )
         {
             return txConfigNotSupported();
+        }
+
+        if ( database != null )
+        {
+            return databaseNotSupported();
         }
 
         if ( bookmarks.isEmpty() )
@@ -142,7 +147,7 @@ public class BoltProtocolV1 implements BoltProtocol
 
     @Override
     public CompletionStage<InternalStatementResultCursor> runInAutoCommitTransaction( Connection connection, Statement statement,
-            Bookmarks bookmarks, TransactionConfig config, boolean waitForRunResponse )
+            Bookmarks bookmarks, String database, TransactionConfig config, boolean waitForRunResponse )
     {
         // bookmarks are ignored for auto-commit transactions in this version of the protocol
 
@@ -150,6 +155,12 @@ public class BoltProtocolV1 implements BoltProtocol
         {
             return txConfigNotSupported();
         }
+
+        if ( database != null )
+        {
+            return databaseNotSupported();
+        }
+
         return runStatement( connection, statement, null, waitForRunResponse );
     }
 
@@ -200,5 +211,11 @@ public class BoltProtocolV1 implements BoltProtocol
     {
         return Futures.failedFuture( new ClientException( "Driver is connected to the database that does not support transaction configuration. " +
                                                           "Please upgrade to neo4j 3.5.0 or later in order to use this functionality" ) );
+    }
+
+    private static <T> CompletionStage<T> databaseNotSupported()
+    {
+        return Futures.failedFuture( new ClientException( "Driver is connected to the database that does not support selection of the database b name. " +
+                                                          "Please upgrade to neo4j 4.0.0 or later in order to use this functionality" ) );
     }
 }

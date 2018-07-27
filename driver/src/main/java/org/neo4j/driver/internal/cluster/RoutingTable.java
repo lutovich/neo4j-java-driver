@@ -25,7 +25,7 @@ import org.neo4j.driver.v1.AccessMode;
 
 public interface RoutingTable
 {
-    boolean isStaleFor( AccessMode mode );
+    boolean isStaleFor( AccessMode mode, String database );
 
     void update( ClusterComposition cluster );
 

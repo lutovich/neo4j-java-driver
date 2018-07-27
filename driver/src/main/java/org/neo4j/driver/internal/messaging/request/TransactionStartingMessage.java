@@ -32,14 +32,15 @@ import static org.neo4j.driver.v1.Values.value;
 abstract class TransactionStartingMessage implements Message
 {
     private static final String BOOKMARKS_METADATA_KEY = "bookmarks";
+    private static final String DATABASE_METADATA_KEY = "db";
     private static final String TX_TIMEOUT_METADATA_KEY = "tx_timeout";
     private static final String TX_METADATA_METADATA_KEY = "tx_metadata";
 
     final Map<String,Value> metadata;
 
-    TransactionStartingMessage( Bookmarks bookmarks, Duration txTimeout, Map<String,Value> txMetadata )
+    TransactionStartingMessage( Bookmarks bookmarks, String database, Duration txTimeout, Map<String,Value> txMetadata )
     {
-        this.metadata = buildMetadata( bookmarks, txTimeout, txMetadata );
+        this.metadata = buildMetadata( bookmarks, database, txTimeout, txMetadata );
     }
 
     public final Map<String,Value> metadata()
@@ -47,13 +48,14 @@ abstract class TransactionStartingMessage implements Message
         return metadata;
     }
 
-    private static Map<String,Value> buildMetadata( Bookmarks bookmarks, Duration txTimeout, Map<String,Value> txMetadata )
+    private static Map<String,Value> buildMetadata( Bookmarks bookmarks, String database, Duration txTimeout, Map<String,Value> txMetadata )
     {
         boolean bookmarksPresent = bookmarks != null && !bookmarks.isEmpty();
+        boolean databasePresent = database != null;
         boolean txTimeoutPresent = txTimeout != null;
         boolean txMetadataPresent = txMetadata != null && !txMetadata.isEmpty();
 
-        if ( !bookmarksPresent && !txTimeoutPresent && !txMetadataPresent )
+        if ( !bookmarksPresent && !databasePresent && !txTimeoutPresent && !txMetadataPresent )
         {
             return emptyMap();
         }
@@ -63,6 +65,10 @@ abstract class TransactionStartingMessage implements Message
         if ( bookmarksPresent )
         {
             result.put( BOOKMARKS_METADATA_KEY, value( bookmarks.values() ) );
+        }
+        if ( databasePresent )
+        {
+            result.put( DATABASE_METADATA_KEY, value( database ) );
         }
         if ( txTimeoutPresent )
         {

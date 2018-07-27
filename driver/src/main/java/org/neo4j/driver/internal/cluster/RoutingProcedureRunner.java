@@ -62,7 +62,7 @@ public class RoutingProcedureRunner
     CompletionStage<List<Record>> runProcedure( Connection connection, Statement procedure )
     {
         return connection.protocol()
-                .runInAutoCommitTransaction( connection, procedure, Bookmarks.empty(), TransactionConfig.empty(), true )
+                .runInAutoCommitTransaction( connection, procedure, Bookmarks.empty(), null, TransactionConfig.empty(), true )
                 .thenCompose( StatementResultCursor::listAsync );
     }
 

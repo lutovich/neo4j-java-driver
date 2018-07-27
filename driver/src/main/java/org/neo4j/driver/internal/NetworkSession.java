@@ -52,6 +52,7 @@ public class NetworkSession extends AbstractStatementRunner implements Session
 
     private final ConnectionProvider connectionProvider;
     private final AccessMode mode;
+    private final String database;
     private final RetryLogic retryLogic;
     protected final Logger logger;
 
@@ -62,10 +63,11 @@ public class NetworkSession extends AbstractStatementRunner implements Session
 
     private final AtomicBoolean open = new AtomicBoolean( true );
 
-    public NetworkSession( ConnectionProvider connectionProvider, AccessMode mode, RetryLogic retryLogic, Logging logging )
+    public NetworkSession( ConnectionProvider connectionProvider, AccessMode mode, String database, RetryLogic retryLogic, Logging logging )
     {
         this.connectionProvider = connectionProvider;
         this.mode = mode;
+        this.database = database;
         this.retryLogic = retryLogic;
         this.logger = new PrefixedLogger( "[" + hashCode() + "]", logging.getLog( LOG_NAME ) );
     }
@@ -439,7 +441,7 @@ public class NetworkSession extends AbstractStatementRunner implements Session
         CompletionStage<InternalStatementResultCursor> newResultCursorStage = ensureNoOpenTxBeforeRunningQuery()
                 .thenCompose( ignore -> acquireConnection( mode ) )
                 .thenCompose( connection ->
-                        connection.protocol().runInAutoCommitTransaction( connection, statement, bookmarks, config, waitForRunResponse ) );
+                        connection.protocol().runInAutoCommitTransaction( connection, statement, bookmarks, database, config, waitForRunResponse ) );
 
         resultCursorStage = newResultCursorStage.exceptionally( error -> null );
 
@@ -462,7 +464,7 @@ public class NetworkSession extends AbstractStatementRunner implements Session
                 .thenCompose( connection ->
                 {
                     ExplicitTransaction tx = new ExplicitTransaction( connection, NetworkSession.this );
-                    return tx.beginAsync( bookmarks, config );
+                    return tx.beginAsync( bookmarks, database, config );
                 } );
 
         // update the reference to the only known transaction
@@ -520,7 +522,7 @@ public class NetworkSession extends AbstractStatementRunner implements Session
                 // there somehow is an existing open connection, this should not happen, just a precondition
                 throw new IllegalStateException( "Existing open connection detected" );
             }
-            return connectionProvider.acquireConnection( mode );
+            return connectionProvider.acquireConnection( mode, database );
         } );
 
         connectionStage = newConnectionStage.exceptionally( error -> null );

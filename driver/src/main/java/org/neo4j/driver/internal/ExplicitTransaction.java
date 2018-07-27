@@ -79,9 +79,9 @@ public class ExplicitTransaction extends AbstractStatementRunner implements Tran
         this.resultCursors = new ResultCursorsHolder();
     }
 
-    public CompletionStage<ExplicitTransaction> beginAsync( Bookmarks initialBookmarks, TransactionConfig config )
+    public CompletionStage<ExplicitTransaction> beginAsync( Bookmarks initialBookmarks, String database, TransactionConfig config )
     {
-        return protocol.beginTransaction( connection, initialBookmarks, config )
+        return protocol.beginTransaction( connection, initialBookmarks, database, config )
                 .handle( ( ignore, beginError ) ->
                 {
                     if ( beginError != null )

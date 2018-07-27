@@ -38,9 +38,20 @@ public class RunWithMetadataMessage extends TransactionStartingMessage
         this( statement, parameters, bookmarks, config.timeout(), config.metadata() );
     }
 
+    public RunWithMetadataMessage( String statement, Map<String,Value> parameters, Bookmarks bookmarks, String database, TransactionConfig config )
+    {
+        this( statement, parameters, bookmarks, database, config.timeout(), config.metadata() );
+    }
+
     public RunWithMetadataMessage( String statement, Map<String,Value> parameters, Bookmarks bookmarks, Duration txTimeout, Map<String,Value> txMetadata )
     {
-        super( bookmarks, txTimeout, txMetadata );
+        this( statement, parameters, bookmarks, null, txTimeout, txMetadata );
+    }
+
+    public RunWithMetadataMessage( String statement, Map<String,Value> parameters, Bookmarks bookmarks, String database, Duration txTimeout,
+            Map<String,Value> txMetadata )
+    {
+        super( bookmarks, database, txTimeout, txMetadata );
         this.statement = statement;
         this.parameters = parameters;
     }

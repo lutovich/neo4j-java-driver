@@ -25,7 +25,7 @@ import org.neo4j.driver.v1.Session;
 
 public interface SessionFactory
 {
-    Session newInstance( AccessMode mode, Bookmarks bookmarks );
+    Session newInstance( AccessMode mode, Bookmarks bookmarks, String database );
 
     CompletionStage<Void> verifyConnectivity();
 

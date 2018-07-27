@@ -94,14 +94,14 @@ class LeakLoggingNetworkSessionTest
 
     private static LeakLoggingNetworkSession newSession( Logging logging, boolean openConnection )
     {
-        return new LeakLoggingNetworkSession( connectionProviderMock( openConnection ), READ, new FixedRetryLogic( 0 ), logging );
+        return new LeakLoggingNetworkSession( connectionProviderMock( openConnection ), READ, null, new FixedRetryLogic( 0 ), logging );
     }
 
     private static ConnectionProvider connectionProviderMock( boolean openConnection )
     {
         ConnectionProvider provider = mock( ConnectionProvider.class );
         Connection connection = connectionMock( openConnection );
-        when( provider.acquireConnection( any( AccessMode.class ) ) ).thenReturn( completedFuture( connection ) );
+        when( provider.acquireConnection( any( AccessMode.class ), any() ) ).thenReturn( completedFuture( connection ) );
         return provider;
     }
 

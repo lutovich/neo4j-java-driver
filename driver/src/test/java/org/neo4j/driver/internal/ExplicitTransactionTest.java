@@ -245,7 +245,7 @@ class ExplicitTransactionTest
         Bookmarks bookmarks = Bookmarks.from( "SomeBookmark" );
         TransactionConfig txConfig = TransactionConfig.empty();
 
-        RuntimeException e = assertThrows( RuntimeException.class, () -> await( tx.beginAsync( bookmarks, txConfig ) ) );
+        RuntimeException e = assertThrows( RuntimeException.class, () -> await( tx.beginAsync( bookmarks, null, txConfig ) ) );
 
         assertEquals( error, e );
         verify( connection ).release();
@@ -260,7 +260,7 @@ class ExplicitTransactionTest
         Bookmarks bookmarks = Bookmarks.from( "SomeBookmark" );
         TransactionConfig txConfig = TransactionConfig.empty();
 
-        await( tx.beginAsync( bookmarks, txConfig ) );
+        await( tx.beginAsync( bookmarks, null, txConfig ) );
 
         verify( connection, never() ).release();
     }
@@ -304,7 +304,7 @@ class ExplicitTransactionTest
     private static ExplicitTransaction beginTx( Connection connection, NetworkSession session, Bookmarks initialBookmarks )
     {
         ExplicitTransaction tx = new ExplicitTransaction( connection, session );
-        return await( tx.beginAsync( initialBookmarks, TransactionConfig.empty() ) );
+        return await( tx.beginAsync( initialBookmarks, null, TransactionConfig.empty() ) );
     }
 
     private static Connection connectionWithBegin( Consumer<ResponseHandler> beginBehaviour )

@@ -25,8 +25,6 @@ import org.neo4j.driver.internal.spi.ConnectionPool;
 import org.neo4j.driver.internal.spi.ConnectionProvider;
 import org.neo4j.driver.v1.AccessMode;
 
-import static org.neo4j.driver.v1.AccessMode.READ;
-
 /**
  * Simple {@link ConnectionProvider connection provider} that obtains connections form the given pool only for
  * the given address.
@@ -43,15 +41,15 @@ public class DirectConnectionProvider implements ConnectionProvider
     }
 
     @Override
-    public CompletionStage<Connection> acquireConnection( AccessMode mode )
+    public CompletionStage<Connection> acquireConnection( AccessMode mode, String database )
     {
-        return connectionPool.acquire( address );
+        return acquireConnection();
     }
 
     @Override
     public CompletionStage<Void> verifyConnectivity()
     {
-        return acquireConnection( READ ).thenCompose( Connection::release );
+        return acquireConnection().thenCompose( Connection::release );
     }
 
     @Override
@@ -63,5 +61,10 @@ public class DirectConnectionProvider implements ConnectionProvider
     public BoltServerAddress getAddress()
     {
         return address;
+    }
+
+    private CompletionStage<Connection> acquireConnection()
+    {
+        return connectionPool.acquire( address );
     }
 }

@@ -56,8 +56,8 @@ class ClusterRoutingTableTest
         clock.progress( 1234 );
 
         // Then
-        assertTrue( routingTable.isStaleFor( READ ) );
-        assertTrue( routingTable.isStaleFor( WRITE ) );
+        assertTrue( routingTable.isStaleFor( READ, null ) );
+        assertTrue( routingTable.isStaleFor( WRITE, null ) );
     }
 
     @Test
@@ -71,8 +71,8 @@ class ClusterRoutingTableTest
         routingTable.update( createClusterComposition( EMPTY, asList( C ), asList( D, E ) ) );
 
         // Then
-        assertTrue( routingTable.isStaleFor( READ ) );
-        assertTrue( routingTable.isStaleFor( WRITE ) );
+        assertTrue( routingTable.isStaleFor( READ, null ) );
+        assertTrue( routingTable.isStaleFor( WRITE, null ) );
     }
 
     @Test
@@ -86,8 +86,8 @@ class ClusterRoutingTableTest
         routingTable.update( createClusterComposition( asList( A, B ), asList( C ), EMPTY ) );
 
         // Then
-        assertTrue( routingTable.isStaleFor( READ ) );
-        assertFalse( routingTable.isStaleFor( WRITE ) );
+        assertTrue( routingTable.isStaleFor( READ, null ) );
+        assertFalse( routingTable.isStaleFor( WRITE, null ) );
     }
 
     @Test
@@ -101,8 +101,8 @@ class ClusterRoutingTableTest
         routingTable.update( createClusterComposition( asList( A, B ), EMPTY, asList( D, E ) ) );
 
         // Then
-        assertFalse( routingTable.isStaleFor( READ ) );
-        assertTrue( routingTable.isStaleFor( WRITE ) );
+        assertFalse( routingTable.isStaleFor( READ, null ) );
+        assertTrue( routingTable.isStaleFor( WRITE, null ) );
     }
 
     @Test
@@ -116,8 +116,8 @@ class ClusterRoutingTableTest
         routingTable.update( createClusterComposition( asList( A, B ), asList( C ), asList( D, E ) ) );
 
         // Then
-        assertFalse( routingTable.isStaleFor( READ ) );
-        assertFalse( routingTable.isStaleFor( WRITE ) );
+        assertFalse( routingTable.isStaleFor( READ, null ) );
+        assertFalse( routingTable.isStaleFor( WRITE, null ) );
     }
 
     @Test
@@ -130,8 +130,8 @@ class ClusterRoutingTableTest
         RoutingTable routingTable = new ClusterRoutingTable( clock, A );
 
         // Then
-        assertTrue( routingTable.isStaleFor( READ ) );
-        assertTrue( routingTable.isStaleFor( WRITE ) );
+        assertTrue( routingTable.isStaleFor( READ, null ) );
+        assertTrue( routingTable.isStaleFor( WRITE, null ) );
     }
 
     @Test
@@ -178,7 +178,7 @@ class ClusterRoutingTableTest
 
         routingTable.update( createClusterComposition( routers, writers, readers ) );
 
-        assertFalse( routingTable.isStaleFor( READ ) );
-        assertFalse( routingTable.isStaleFor( WRITE ) );
+        assertFalse( routingTable.isStaleFor( READ, null ) );
+        assertFalse( routingTable.isStaleFor( WRITE, null ) );
     }
 }

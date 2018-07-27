@@ -28,7 +28,7 @@ import org.neo4j.driver.v1.AccessMode;
  */
 public interface ConnectionProvider
 {
-    CompletionStage<Connection> acquireConnection( AccessMode mode );
+    CompletionStage<Connection> acquireConnection( AccessMode mode, String database );
 
     CompletionStage<Void> verifyConnectivity();
 

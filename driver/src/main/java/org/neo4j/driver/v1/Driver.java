@@ -73,6 +73,8 @@ public interface Driver extends AutoCloseable
      */
     Session session();
 
+    Session session( SessionConfig config );
+
     /**
      * Create a new {@link Session} for a specific type of work.
      * <p>

@@ -142,7 +142,7 @@ public class BoltProtocolV1Test
     {
         Connection connection = connectionMock();
 
-        CompletionStage<Void> stage = protocol.beginTransaction( connection, Bookmarks.empty(), TransactionConfig.empty() );
+        CompletionStage<Void> stage = protocol.beginTransaction( connection, Bookmarks.empty(), null, TransactionConfig.empty() );
 
         verify( connection ).write(
                 new RunMessage( "BEGIN" ), NoOpResponseHandler.INSTANCE,
@@ -157,7 +157,7 @@ public class BoltProtocolV1Test
         Connection connection = connectionMock();
         Bookmarks bookmarks = Bookmarks.from( "neo4j:bookmark:v1:tx100" );
 
-        CompletionStage<Void> stage = protocol.beginTransaction( connection, bookmarks, TransactionConfig.empty() );
+        CompletionStage<Void> stage = protocol.beginTransaction( connection, bookmarks, null, TransactionConfig.empty() );
 
         verify( connection ).writeAndFlush(
                 eq( new RunMessage( "BEGIN", bookmarks.asBeginTransactionParameters() ) ), eq( NoOpResponseHandler.INSTANCE ),
@@ -248,7 +248,7 @@ public class BoltProtocolV1Test
         if ( autoCommitTx )
         {
 
-            cursorStage = protocol.runInAutoCommitTransaction( connection, STATEMENT, Bookmarks.empty(), TransactionConfig.empty(), false );
+            cursorStage = protocol.runInAutoCommitTransaction( connection, STATEMENT, Bookmarks.empty(), null, TransactionConfig.empty(), false );
         }
         else
         {
@@ -268,7 +268,7 @@ public class BoltProtocolV1Test
         CompletionStage<InternalStatementResultCursor> cursorStage;
         if ( session )
         {
-            cursorStage = protocol.runInAutoCommitTransaction( connection, STATEMENT, Bookmarks.empty(), TransactionConfig.empty(), true );
+            cursorStage = protocol.runInAutoCommitTransaction( connection, STATEMENT, Bookmarks.empty(), null, TransactionConfig.empty(), true );
         }
         else
         {

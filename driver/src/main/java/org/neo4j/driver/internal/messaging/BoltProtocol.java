@@ -63,10 +63,11 @@ public interface BoltProtocol
      *
      * @param connection the connection to use.
      * @param bookmarks the bookmarks. Never null, should be {@link Bookmarks#empty()} when absent.
+     * @param database the database name, can be {@code null}.
      * @param config the transaction configuration. Never null, should be {@link TransactionConfig#empty()} when absent.
      * @return a completion stage completed when transaction is started or completed exceptionally when there was a failure.
      */
-    CompletionStage<Void> beginTransaction( Connection connection, Bookmarks bookmarks, TransactionConfig config );
+    CompletionStage<Void> beginTransaction( Connection connection, Bookmarks bookmarks, String database, TransactionConfig config );
 
     /**
      * Commit the explicit transaction.
@@ -91,6 +92,7 @@ public interface BoltProtocol
      * @param connection the network connection to use.
      * @param statement the cypher to execute.
      * @param bookmarks the bookmarks. Never null, should be {@link Bookmarks#empty()} when absent.
+     * @param database the database name, can be {@code null}.
      * @param config the transaction config for the implicitly started auto-commit transaction.
      * @param waitForRunResponse {@code true} for async query execution and {@code false} for blocking query
      * execution. Makes returned cursor stage be chained after the RUN response arrives. Needed to have statement
@@ -98,7 +100,7 @@ public interface BoltProtocol
      * @return stage with cursor.
      */
     CompletionStage<InternalStatementResultCursor> runInAutoCommitTransaction( Connection connection, Statement statement,
-            Bookmarks bookmarks, TransactionConfig config, boolean waitForRunResponse );
+            Bookmarks bookmarks, String database, TransactionConfig config, boolean waitForRunResponse );
 
     /**
      * Execute the given statement in a running explicit transaction, i.e. {@link Transaction#run(Statement)}.

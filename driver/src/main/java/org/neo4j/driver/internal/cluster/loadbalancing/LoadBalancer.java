@@ -91,17 +91,17 @@ public class LoadBalancer implements ConnectionProvider, RoutingErrorHandler
     }
 
     @Override
-    public CompletionStage<Connection> acquireConnection( AccessMode mode )
+    public CompletionStage<Connection> acquireConnection( AccessMode mode, String database )
     {
-        return freshRoutingTable( mode )
-                .thenCompose( routingTable -> acquire( mode, routingTable ) )
+        return freshRoutingTable( mode, database )
+                .thenCompose( routingTable -> acquire( mode, database, routingTable ) )
                 .thenApply( connection -> new RoutingConnection( connection, mode, this ) );
     }
 
     @Override
     public CompletionStage<Void> verifyConnectivity()
     {
-        return freshRoutingTable( AccessMode.READ ).thenApply( routingTable -> null );
+        return freshRoutingTable( AccessMode.READ, null ).thenApply( routingTable -> null );
     }
 
     @Override
@@ -128,14 +128,14 @@ public class LoadBalancer implements ConnectionProvider, RoutingErrorHandler
         routingTable.forget( address );
     }
 
-    private synchronized CompletionStage<RoutingTable> freshRoutingTable( AccessMode mode )
+    private synchronized CompletionStage<RoutingTable> freshRoutingTable( AccessMode mode, String database )
     {
         if ( refreshRoutingTableFuture != null )
         {
             // refresh is already happening concurrently, just use it's result
             return refreshRoutingTableFuture;
         }
-        else if ( routingTable.isStaleFor( mode ) )
+        else if ( routingTable.isStaleFor( mode, database ) )
         {
             // existing routing table is not fresh and should be updated
             log.info( "Routing table is stale. %s", routingTable );
@@ -192,17 +192,17 @@ public class LoadBalancer implements ConnectionProvider, RoutingErrorHandler
         routingTableFuture.completeExceptionally( error );
     }
 
-    private CompletionStage<Connection> acquire( AccessMode mode, RoutingTable routingTable )
+    private CompletionStage<Connection> acquire( AccessMode mode, String database, RoutingTable routingTable )
     {
         AddressSet addresses = addressSet( mode, routingTable );
         CompletableFuture<Connection> result = new CompletableFuture<>();
-        acquire( mode, addresses, result );
+        acquire( mode, database, addresses, result );
         return result;
     }
 
-    private void acquire( AccessMode mode, AddressSet addresses, CompletableFuture<Connection> result )
+    private void acquire( AccessMode mode, String database, AddressSet addresses, CompletableFuture<Connection> result )
     {
-        BoltServerAddress address = selectAddress( mode, addresses );
+        BoltServerAddress address = selectAddress( mode, database, addresses );
 
         if ( address == null )
         {
@@ -221,7 +221,7 @@ public class LoadBalancer implements ConnectionProvider, RoutingErrorHandler
                 {
                     log.error( "Failed to obtain a connection towards address " + address, error );
                     forget( address );
-                    eventExecutorGroup.next().execute( () -> acquire( mode, addresses, result ) );
+                    eventExecutorGroup.next().execute( () -> acquire( mode, database, addresses, result ) );
                 }
                 else
                 {
@@ -248,8 +248,10 @@ public class LoadBalancer implements ConnectionProvider, RoutingErrorHandler
         }
     }
 
-    private BoltServerAddress selectAddress( AccessMode mode, AddressSet servers )
+    private BoltServerAddress selectAddress( AccessMode mode, String database, AddressSet servers )
     {
+        // todo: use database parameter when routing table contains database info
+
         BoltServerAddress[] addresses = servers.toArray();
 
         switch ( mode )

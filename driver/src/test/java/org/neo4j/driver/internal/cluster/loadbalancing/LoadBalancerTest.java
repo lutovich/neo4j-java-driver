@@ -52,6 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -94,7 +95,7 @@ class LoadBalancerTest
         LoadBalancer loadBalancer = new LoadBalancer( connectionPool, routingTable, rediscovery,
                 GlobalEventExecutor.INSTANCE, DEV_NULL_LOGGING );
 
-        assertNotNull( await( loadBalancer.acquireConnection( READ ) ) );
+        assertNotNull( await( loadBalancer.acquireConnection( READ, null ) ) );
 
         verify( rediscovery ).lookupClusterComposition( routingTable, connectionPool );
         assertArrayEquals( new BoltServerAddress[]{reader1, reader2}, routingTable.readers().toArray() );
@@ -131,7 +132,7 @@ class LoadBalancerTest
     {
         ConnectionPool connectionPool = newConnectionPoolMock();
         RoutingTable routingTable = mock( RoutingTable.class );
-        when( routingTable.isStaleFor( any( AccessMode.class ) ) ).thenReturn( true );
+        when( routingTable.isStaleFor( any( AccessMode.class ), any() ) ).thenReturn( true );
         Rediscovery rediscovery = mock( Rediscovery.class );
         ClusterComposition emptyClusterComposition = new ClusterComposition( 42, emptySet(), emptySet(), emptySet() );
         when( rediscovery.lookupClusterComposition( routingTable, connectionPool ) )
@@ -142,10 +143,10 @@ class LoadBalancerTest
         LoadBalancer loadBalancer = new LoadBalancer( connectionPool, routingTable, rediscovery,
                 GlobalEventExecutor.INSTANCE, DEV_NULL_LOGGING );
 
-        SessionExpiredException error1 = assertThrows( SessionExpiredException.class, () -> await( loadBalancer.acquireConnection( READ ) ) );
+        SessionExpiredException error1 = assertThrows( SessionExpiredException.class, () -> await( loadBalancer.acquireConnection( READ, null ) ) );
         assertThat( error1.getMessage(), startsWith( "Failed to obtain connection towards READ server" ) );
 
-        SessionExpiredException error2 = assertThrows( SessionExpiredException.class, () -> await( loadBalancer.acquireConnection( WRITE ) ) );
+        SessionExpiredException error2 = assertThrows( SessionExpiredException.class, () -> await( loadBalancer.acquireConnection( WRITE, null ) ) );
         assertThat( error2.getMessage(), startsWith( "Failed to obtain connection towards WRITE server" ) );
     }
 
@@ -171,7 +172,7 @@ class LoadBalancerTest
         Set<BoltServerAddress> seenAddresses = new HashSet<>();
         for ( int i = 0; i < 10; i++ )
         {
-            Connection connection = await( loadBalancer.acquireConnection( READ ) );
+            Connection connection = await( loadBalancer.acquireConnection( READ, null ) );
             seenAddresses.add( connection.serverAddress() );
         }
 
@@ -198,7 +199,7 @@ class LoadBalancerTest
         Set<BoltServerAddress> seenAddresses = new HashSet<>();
         for ( int i = 0; i < 10; i++ )
         {
-            Connection connection = await( loadBalancer.acquireConnection( READ ) );
+            Connection connection = await( loadBalancer.acquireConnection( READ, null ) );
             seenAddresses.add( connection.serverAddress() );
         }
 
@@ -222,7 +223,7 @@ class LoadBalancerTest
         LoadBalancer loadBalancer = new LoadBalancer( connectionPool, routingTable, rediscovery,
                 GlobalEventExecutor.INSTANCE, DEV_NULL_LOGGING );
 
-        Connection connection = await( loadBalancer.acquireConnection( READ ) );
+        Connection connection = await( loadBalancer.acquireConnection( READ, null ) );
 
         assertNotNull( connection );
         assertEquals( B, connection.serverAddress() );
@@ -269,7 +270,7 @@ class LoadBalancerTest
         LoadBalancer loadBalancer = new LoadBalancer( connectionPool, routingTable, rediscovery,
                 GlobalEventExecutor.INSTANCE, DEV_NULL_LOGGING );
 
-        Connection connection = await( loadBalancer.acquireConnection( READ ) );
+        Connection connection = await( loadBalancer.acquireConnection( READ, null ) );
         assertNotNull( connection );
 
         verify( connectionPool ).retainAll( new HashSet<>( asList( A, B, C ) ) );
@@ -286,10 +287,10 @@ class LoadBalancerTest
 
         LoadBalancer loadBalancer = new LoadBalancer( connectionPool, routingTable, rediscovery,
                 GlobalEventExecutor.INSTANCE, DEV_NULL_LOGGING );
-        Connection connection = await( loadBalancer.acquireConnection( mode ) );
+        Connection connection = await( loadBalancer.acquireConnection( mode, null ) );
         assertNotNull( connection );
 
-        verify( routingTable ).isStaleFor( mode );
+        verify( routingTable ).isStaleFor( mode, any() );
         verify( rediscovery ).lookupClusterComposition( routingTable, connectionPool );
     }
 
@@ -305,15 +306,15 @@ class LoadBalancerTest
         LoadBalancer loadBalancer = new LoadBalancer( connectionPool, routingTable, rediscovery,
                 GlobalEventExecutor.INSTANCE, DEV_NULL_LOGGING );
 
-        assertNotNull( await( loadBalancer.acquireConnection( notStaleMode ) ) );
-        verify( routingTable ).isStaleFor( notStaleMode );
+        assertNotNull( await( loadBalancer.acquireConnection( notStaleMode, null ) ) );
+        verify( routingTable ).isStaleFor( notStaleMode, any() );
         verify( rediscovery, never() ).lookupClusterComposition( routingTable, connectionPool );
     }
 
     private static RoutingTable newStaleRoutingTableMock( AccessMode mode )
     {
         RoutingTable routingTable = mock( RoutingTable.class );
-        when( routingTable.isStaleFor( mode ) ).thenReturn( true );
+        when( routingTable.isStaleFor( eq( mode ), any() ) ).thenReturn( true );
 
         AddressSet addresses = new AddressSet();
         addresses.update( new HashSet<>( singletonList( LOCAL_DEFAULT ) ) );

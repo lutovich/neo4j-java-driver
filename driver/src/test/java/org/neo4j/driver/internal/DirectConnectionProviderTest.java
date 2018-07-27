@@ -48,8 +48,8 @@ class DirectConnectionProviderTest
         ConnectionPool pool = poolMock( address, connection1, connection2 );
         DirectConnectionProvider provider = new DirectConnectionProvider( address, pool );
 
-        assertSame( connection1, await( provider.acquireConnection( READ ) ) );
-        assertSame( connection2, await( provider.acquireConnection( WRITE ) ) );
+        assertSame( connection1, await( provider.acquireConnection( READ, null ) ) );
+        assertSame( connection2, await( provider.acquireConnection( WRITE, null ) ) );
     }
 
     @Test

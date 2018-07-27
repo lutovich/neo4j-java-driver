@@ -106,7 +106,7 @@ class DriverFactoryTest
         createDriver( uri, factory, config );
 
         SessionFactory capturedFactory = factory.capturedSessionFactory;
-        assertThat( capturedFactory.newInstance( READ, null ), instanceOf( NetworkSession.class ) );
+        assertThat( capturedFactory.newInstance( READ, null, null ), instanceOf( NetworkSession.class ) );
     }
 
     @ParameterizedTest
@@ -119,7 +119,7 @@ class DriverFactoryTest
         createDriver( uri, factory, config );
 
         SessionFactory capturedFactory = factory.capturedSessionFactory;
-        assertThat( capturedFactory.newInstance( READ, null ), instanceOf( LeakLoggingNetworkSession.class ) );
+        assertThat( capturedFactory.newInstance( READ, null, null ), instanceOf( LeakLoggingNetworkSession.class ) );
     }
 
     @ParameterizedTest

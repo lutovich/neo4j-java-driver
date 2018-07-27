@@ -35,9 +35,19 @@ public class BeginMessage extends TransactionStartingMessage
         this( bookmarks, config.timeout(), config.metadata() );
     }
 
+    public BeginMessage( Bookmarks bookmarks, String database, TransactionConfig config )
+    {
+        this( bookmarks, database, config.timeout(), config.metadata() );
+    }
+
     public BeginMessage( Bookmarks bookmarks, Duration txTimeout, Map<String,Value> txMetadata )
     {
-        super( bookmarks, txTimeout, txMetadata );
+        this( bookmarks, null, txTimeout, txMetadata );
+    }
+
+    public BeginMessage( Bookmarks bookmarks, String database, Duration txTimeout, Map<String,Value> txMetadata )
+    {
+        super( bookmarks, database, txTimeout, txMetadata );
     }
 
     @Override

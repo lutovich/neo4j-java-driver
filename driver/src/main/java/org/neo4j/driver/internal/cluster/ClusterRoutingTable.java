@@ -57,7 +57,7 @@ public class ClusterRoutingTable implements RoutingTable
     }
 
     @Override
-    public boolean isStaleFor( AccessMode mode )
+    public boolean isStaleFor( AccessMode mode, String database )
     {
         return expirationTimeout < clock.millis() ||
                routers.size() < MIN_ROUTERS ||

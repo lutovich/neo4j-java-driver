@@ -84,9 +84,9 @@ public class BoltProtocolV3 implements BoltProtocol
     }
 
     @Override
-    public CompletionStage<Void> beginTransaction( Connection connection, Bookmarks bookmarks, TransactionConfig config )
+    public CompletionStage<Void> beginTransaction( Connection connection, Bookmarks bookmarks, String database, TransactionConfig config )
     {
-        BeginMessage beginMessage = new BeginMessage( bookmarks, config );
+        BeginMessage beginMessage = new BeginMessage( bookmarks, database, config );
 
         if ( bookmarks.isEmpty() )
         {
@@ -119,26 +119,26 @@ public class BoltProtocolV3 implements BoltProtocol
 
     @Override
     public CompletionStage<InternalStatementResultCursor> runInAutoCommitTransaction( Connection connection, Statement statement,
-            Bookmarks bookmarks, TransactionConfig config, boolean waitForRunResponse )
+            Bookmarks bookmarks, String database, TransactionConfig config, boolean waitForRunResponse )
     {
-        return runStatement( connection, statement, null, bookmarks, config, waitForRunResponse );
+        return runStatement( connection, statement, null, bookmarks, database, config, waitForRunResponse );
     }
 
     @Override
     public CompletionStage<InternalStatementResultCursor> runInExplicitTransaction( Connection connection, Statement statement, ExplicitTransaction tx,
             boolean waitForRunResponse )
     {
-        return runStatement( connection, statement, tx, Bookmarks.empty(), TransactionConfig.empty(), waitForRunResponse );
+        return runStatement( connection, statement, tx, Bookmarks.empty(), null, TransactionConfig.empty(), waitForRunResponse );
     }
 
     private static CompletionStage<InternalStatementResultCursor> runStatement( Connection connection, Statement statement,
-            ExplicitTransaction tx, Bookmarks bookmarks, TransactionConfig config, boolean waitForRunResponse )
+            ExplicitTransaction tx, Bookmarks bookmarks, String database, TransactionConfig config, boolean waitForRunResponse )
     {
         String query = statement.text();
         Map<String,Value> params = statement.parameters().asMap( ofValue() );
 
         CompletableFuture<Void> runCompletedFuture = new CompletableFuture<>();
-        Message runMessage = new RunWithMetadataMessage( query, params, bookmarks, config );
+        Message runMessage = new RunWithMetadataMessage( query, params, bookmarks, database, config );
         RunResponseHandler runHandler = new RunResponseHandler( runCompletedFuture, METADATA_EXTRACTOR );
         PullAllResponseHandler pullAllHandler = newPullAllHandler( statement, runHandler, connection, tx );
 

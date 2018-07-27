@@ -29,6 +29,7 @@ import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.Logger;
 import org.neo4j.driver.v1.Logging;
 import org.neo4j.driver.v1.Session;
+import org.neo4j.driver.v1.SessionConfig;
 
 import static org.neo4j.driver.internal.util.Futures.completedWithNull;
 
@@ -63,9 +64,15 @@ public class InternalDriver implements Driver
     }
 
     @Override
+    public Session session( SessionConfig config )
+    {
+        return newSession( config.accessMode(), Bookmarks.from( config.bookmarks() ), config.database() );
+    }
+
+    @Override
     public Session session( AccessMode mode )
     {
-        return newSession( mode, Bookmarks.empty() );
+        return newSession( mode, Bookmarks.empty(), null );
     }
 
     @Override
@@ -77,7 +84,7 @@ public class InternalDriver implements Driver
     @Override
     public Session session( AccessMode mode, String bookmark )
     {
-        return newSession( mode, Bookmarks.from( bookmark ) );
+        return newSession( mode, Bookmarks.from( bookmark ), null );
     }
 
     @Override
@@ -89,13 +96,13 @@ public class InternalDriver implements Driver
     @Override
     public Session session( AccessMode mode, Iterable<String> bookmarks )
     {
-        return newSession( mode, Bookmarks.from( bookmarks ) );
+        return newSession( mode, Bookmarks.from( bookmarks ), null );
     }
 
-    private Session newSession( AccessMode mode, Bookmarks bookmarks )
+    private Session newSession( AccessMode mode, Bookmarks bookmarks, String database )
     {
         assertOpen();
-        Session session = sessionFactory.newInstance( mode, bookmarks );
+        Session session = sessionFactory.newInstance( mode, bookmarks, database );
         if ( closed.get() )
         {
             // session does not immediately acquire connection, it is fine to just throw
